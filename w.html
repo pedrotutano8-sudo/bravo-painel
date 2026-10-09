@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bravo Film · WhatsApp</title>
+<style>
+:root{--bg:#000;--t:#f5f5f7;--t2:#a1a1a6;--a:#2997ff}
+@media (prefers-color-scheme:light){:root{--bg:#fff;--t:#1d1d1f;--t2:#6e6e73;--a:#0071e3}}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font:17px/1.47 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+main{min-height:100%;display:grid;place-items:center;text-align:center;padding:24px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0 0 8px}
+p{color:var(--t2);margin:0 0 24px}
+a{display:inline-flex;align-items:center;height:48px;padding:0 24px;border-radius:980px;background:#25d366;color:#fff;font-weight:600;text-decoration:none}
+.sp{width:28px;height:28px;border:3px solid var(--t2);border-top-color:var(--a);border-radius:50%;margin:0 auto 20px;animation:g .8s linear infinite}
+@keyframes g{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<main><div>
+  <div class="sp" id="sp"></div>
+  <h1>Abrindo o WhatsApp…</h1>
+  <p>Você vai falar com a Bravo Film.</p>
+  <a id="ir" href="#" class="hidden" style="visibility:hidden">Abrir WhatsApp</a>
+</div></main>
+<script>
+// Página de entrada dos anúncios (Google Ads e outros). Grava o clique e manda pro WhatsApp
+// com um código curto na mensagem, que liga a conversa ao clique do anúncio.
+(function () {
+  const SUPABASE_URL = 'https://upbamngyptzuvenvlnuj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_z4oAJyUYFgRFlU-nR8DWQg_W9wB-YBq';
+  // reserva: se o banco não responder, o lead vai pro WhatsApp do mesmo jeito (sem código)
+  const RESERVA = { numero: '5519998731493', texto: 'Olá! Vi o anúncio da Bravo Film no Google e quero um orçamento.' };
+
+  const q = new URLSearchParams(location.search);
+  const utm = {}; ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(k => { if (q.get(k)) utm[k] = q.get(k); });
+  let foi = false;
+  const ir = (numero, texto) => {
+    if (foi) return; foi = true;
+    const url = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texto);
+    const a = document.getElementById('ir'); a.href = url; a.style.visibility = 'visible';
+    document.getElementById('sp').style.display = 'none';
+    location.replace(url);
+  };
+  setTimeout(() => ir(RESERVA.numero, RESERVA.texto), 2500);
+
+  fetch(SUPABASE_URL + '/rest/v1/rpc/bravo_registrar_clique', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+    body: JSON.stringify({ p_slug: q.get('l') || 'google', p_gclid: q.get('gclid'), p_gbraid: q.get('gbraid'), p_wbraid: q.get('wbraid'),
+                           p_fbclid: q.get('fbclid'), p_utm: utm, p_pagina: location.pathname + location.search.slice(0, 400) }),
+    keepalive: true
+  }).then(r => r.ok ? r.json() : null).then(d => {
+    if (d && d.numero) ir(d.numero, d.texto); else ir(RESERVA.numero, RESERVA.texto);
+  }).catch(() => ir(RESERVA.numero, RESERVA.texto));
+})();
+</script>
+</body>
+</html>
