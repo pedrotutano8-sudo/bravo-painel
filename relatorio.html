@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Bravo Film · Relatório ao vivo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23000'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='17' fill='%232997ff' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="comum.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="comum.js"></script>
+<style>
+.hero{padding:88px 0 56px}
+.hero .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:28px}
+.hero .controle{margin-top:28px}
+section.bloco{padding:72px 0;border-top:1px solid var(--border)}
+.bloco .lede{margin-bottom:36px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat{padding:24px 22px}
+.stat .v{font-size:clamp(34px,4.4vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.stat .r{font-size:15px;color:var(--text);margin-top:8px}
+.stat .c{font-size:13px;color:var(--text-3);margin-top:4px;letter-spacing:-.005em}
+.stat .c .melhor{color:var(--ok)}.stat .c .pior{color:var(--bad)}
+@media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.stats{gap:10px}.stat{padding:18px 16px}}
+
+/* barras horizontais (funil, situações) — uma cor só: magnitude */
+.barras{padding:8px 24px 20px}
+.barra{display:grid;grid-template-columns:minmax(120px,220px) 1fr 88px;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--border)}
+.barra:first-child{border-top:0}
+.barra .nome{font-size:15px}
+.barra .trilho{height:10px;background:var(--neutral-soft);border-radius:980px;overflow:hidden}
+.barra .preench{height:100%;background:var(--accent);border-radius:980px;min-width:4px;transition:width .6s var(--ease)}
+.barra .num{text-align:right;font-size:15px;font-weight:600}
+.barra .num small{display:block;font-size:12px;font-weight:400;color:var(--text-3)}
+@media (max-width:560px){.barra{grid-template-columns:1fr 70px;grid-template-areas:"n v" "t t";row-gap:8px}.barra .nome{grid-area:n}.barra .trilho{grid-area:t}.barra .num{grid-area:v}}
+
+/* colunas por dia */
+.colunas{display:flex;align-items:flex-end;gap:3px;height:180px;padding:24px 24px 0}
+.coluna{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:default;position:relative}
+.coluna .b{background:var(--accent);border-radius:4px 4px 0 0;min-height:2px;transition:opacity .15s}
+.coluna:hover .b{opacity:.75}
+.coluna .venda{position:absolute;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2px var(--surface)}
+.eixo{display:flex;justify-content:space-between;padding:8px 24px 18px;border-top:1px solid var(--border);margin-top:0;font-size:12px;color:var(--text-3);letter-spacing:0}
+.legenda-c{display:flex;gap:16px;font-size:12px;color:var(--text-2);padding:0 24px 18px;letter-spacing:0}
+.ponto{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+#dica{position:fixed;z-index:50;pointer-events:none;background:var(--elevated);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:var(--r-md);padding:8px 12px;font-size:13px;line-height:1.45;letter-spacing:0;white-space:nowrap}
+
+/* tabelas e listas */
+.tabela{width:100%;border-collapse:collapse;font-size:15px}
+.tabela th{font-size:12px;font-weight:400;color:var(--text-3);text-align:left;padding:12px 20px;letter-spacing:0;border-bottom:1px solid var(--border)}
+.tabela td{padding:14px 20px;border-bottom:1px solid var(--border)}
+.tabela tr:last-child td{border-bottom:0}
+.tabela .d{text-align:right}
+.rolagem{overflow-x:auto}
+.itens .item{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px 22px;border-top:1px solid var(--border);color:var(--text);transition:background .15s}
+.itens .item:first-child{border-top:0}
+.itens a.item:hover{background:var(--neutral-soft)}
+.itens .item .n{font-weight:600}
+.itens .item .s{font-size:13px;color:var(--text-2);grid-column:1/-1}
+.itens .item .v{font-weight:600;text-align:right}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.dupla{grid-template-columns:1fr}}
+.subt{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 14px}
+.vazio{padding:36px 22px;color:var(--text-2);text-align:center;font-size:15px}
+.fim{padding:48px 0 80px;border-top:1px solid var(--border);color:var(--text-3);font-size:13px;line-height:1.7;letter-spacing:0}
+</style>
+</head>
+<body>
+<main id="app" class="hidden">
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow" id="sobrancelha">Bravo Film · Relatório ao vivo</div>
+      <h1 class="display" id="titulo">Carregando…</h1>
+      <p class="lede" id="lede"></p>
+      <div class="chips" id="chips"></div>
+      <div class="controle"><div class="seg" id="periodos">
+        <button data-p="mes">Este mês</button><button data-p="mesant">Mês passado</button><button data-p="7d">7 dias</button><button data-p="30d">30 dias</button>
+      </div></div>
+    </section>
+
+    <section class="bloco"><div class="eyebrow">O período em números</div><h2 class="headline" id="h-numeros"></h2><p class="lede" id="l-numeros"></p><div class="stats" id="stats"></div></section>
+
+    <section class="bloco"><div class="eyebrow">Funil</div><h2 class="headline" id="h-funil"></h2><p class="lede">Do primeiro "oi" até a venda registrada. Cada barra mostra quantos leads chegaram àquela etapa.</p><div class="card barras" id="funil"></div></section>
+
+    <section class="bloco"><div class="eyebrow">Velocidade</div><h2 class="headline" id="h-vel"></h2><p class="lede" id="l-vel"></p><div class="stats" id="vel"></div></section>
+
+    <section class="bloco"><div class="eyebrow">Leads por dia</div><h2 class="headline" id="h-dia"></h2><p class="lede">Passe o mouse ou toque numa coluna para ver o dia.</p>
+      <div class="card"><div class="colunas" id="colunas" role="img" aria-label="Leads por dia"></div><div class="eixo" id="eixo"></div>
+      <div class="legenda-c"><span><i class="ponto" style="background:var(--accent)"></i>Leads</span><span><i class="ponto" style="background:var(--ok)"></i>Dia com venda</span></div></div></section>
+
+    <section class="bloco"><div class="eyebrow">Anúncios</div><h2 class="headline" id="h-anun"></h2><p class="lede">Leads que chegaram pelo botão de WhatsApp dos anúncios, agrupados por anúncio.</p><div class="card rolagem" id="anuncios"></div></section>
+
+    <section class="bloco"><div class="eyebrow">Pipeline</div><h2 class="headline" id="h-pipe"></h2><p class="lede">Leads repassados que ainda não têm desfecho. Toque num nome para abrir no CRM.</p>
+      <div class="dupla"><div><div class="subt">Em aberto</div><div class="card itens" id="pipeline"></div></div><div><div class="subt">Ganhos</div><div class="card itens" id="ganhos"></div></div></div></section>
+
+    <section class="bloco"><div class="eyebrow">Onde pararam</div><h2 class="headline" id="h-onde"></h2><p class="lede">Leitura automática das conversas em aberto, feita pela Bia a cada 3 horas, e os motivos das perdas registradas.</p>
+      <div class="dupla"><div><div class="subt">Conversas em aberto</div><div class="card barras" id="situacoes"></div></div><div><div class="subt">Motivos de perda</div><div class="card barras" id="motivos"></div></div></div></section>
+
+    <section class="bloco"><div class="eyebrow">Sinais</div><h2 class="headline">O que mudou depois da Bia.</h2><p class="lede">Os mesmos indicadores dos diagnósticos de agosto e setembro, agora medidos sozinhos.</p><div class="stats" id="sinais"></div></section>
+
+    <footer class="fim">
+      Liderate Digital · Relatório ao vivo Bravo Film. Dados do CRM em tempo real: o que for marcado no CRM ou com #ganho no WhatsApp aparece aqui ao recarregar.<br>
+      Comparações com agosto e setembro vêm dos diagnósticos sobre o TINTIM. <a href="https://deploy-bravo.vercel.app/" target="_blank" rel="noopener">Ver diagnósticos anteriores</a>.
+    </footer>
+  </div>
+</main>
+<div id="dica" class="hidden"></div>
+
+<script>
+const { $, esc, brl, brlCurto, int, pct, data, fone, duracao, periodo, MESES, SITUACAO, SERVICO, guarda } = Bravo;
+// Referências dos diagnósticos (TINTIM, antes da Bia)
+const ANTES = { conv_ago: 2.6, resp_media_set_h: 9.5, resp_media_ago_h: 7.5, follow_set: 12.4, follow_resp_set: 40, fora_horario_set: 73, fora_regiao_set: 49.6 };
+let sb, chave = guarda.ler('periodo-rel', 'mes');
+
+function setPeriodo(p) {
+  chave = p; guarda.gravar('periodo-rel', p);
+  document.querySelectorAll('#periodos button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+  carregar();
+}
+
+async function carregar() {
+  const f = periodo(chave);
+  const nomePer = (chave === 'mes' || chave === 'mesant') ? MESES[f[0].getMonth()] : chave === '7d' ? 'últimos 7 dias' : 'últimos 30 dias';
+  $('#sobrancelha').textContent = 'Bravo Film · Relatório ao vivo · ' + nomePer;
+  const { data: r, error } = await sb.rpc('bravo_painel_relatorio', { p_de: f[0].toISOString(), p_ate: f[1].toISOString() });
+  if (error) { $('#titulo').textContent = 'Não consegui carregar.'; $('#lede').textContent = error.message; return; }
+  desenhar(r, f, nomePer);
+}
+
+const stat = (v, r, c) => `<div class="card stat"><div class="v num">${v}</div><div class="r">${r}</div>${c ? `<div class="c">${c}</div>` : ''}</div>`;
+const barras = (itens, total) => {
+  if (!itens.length) return '<div class="vazio">Nada para mostrar no período.</div>';
+  const max = Math.max(...itens.map(i => i.n), 1);
+  return itens.map(i => `<div class="barra" data-tip="${esc(i.nome)}: ${int(i.n)}${total ? ' (' + pct(i.n, total) + ')' : ''}">
+    <div class="nome">${esc(i.nome)}</div><div class="trilho"><div class="preench" style="width:${(i.n / max * 100).toFixed(1)}%"></div></div>
+    <div class="num">${int(i.n)}${total ? `<small>${pct(i.n, total)}</small>` : ''}</div></div>`).join('');
+};
+const compara = (agora, antes, menorMelhor, sufixo = '') => {
+  if (agora == null || isNaN(agora)) return '';
+  const melhor = menorMelhor ? agora < antes : agora > antes;
+  return `<span class="${melhor ? 'melhor' : 'pior'}">${melhor ? 'melhor' : 'pior'} que antes</span> · antes: ${String(antes).replace('.', ',')}${sufixo}`;
+};
+
+function desenhar(r, f, nomePer) {
+  const t = r.totais, rs = r.resposta, fe = r.felipe, fu = r.followup;
+  const conv = t.leads ? t.vendas / t.leads * 100 : null;
+
+  // hero
+  $('#titulo').innerHTML = !t.leads ? 'Nenhum lead<br>no período.'
+    : t.vendas ? `${int(t.leads)} leads.<br>${int(t.vendas)} ${t.vendas == 1 ? 'venda' : 'vendas'}, ${brlCurto(t.receita)}.`
+    : `${int(t.leads)} leads.<br>Resposta em ${duracao(rs.mediana_seg)}.`;
+  $('#lede').textContent = !t.leads ? 'Assim que os leads dos anúncios começarem a chegar, os números aparecem aqui sozinhos.'
+    : `A Bia respondeu ${pct(rs.ate_1min, rs.respondidos)} dos leads em até 1 minuto, ${pct(t.fora_horario, t.leads)} deles com a loja fechada. ` +
+      (t.em_aberto ? `${int(t.em_aberto)} ${t.em_aberto == 1 ? 'negociação segue aberta' : 'negociações seguem abertas'}${Number(t.pipeline_valor) ? ', somando ' + brlCurto(t.pipeline_valor) + ' em orçamentos' : ''}.` : '');
+  $('#chips').innerHTML = [`${data(f[0])} a ${data(new Date(f[1] - 1))}`, `${int(t.leads)} leads`, `${int(t.de_anuncio)} de anúncio`, 'Fonte: Bia · WhatsApp', 'Atualizado ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })]
+    .map(c => `<span class="chip">${esc(c)}</span>`).join('');
+
+  // números
+  $('#h-numeros').textContent = t.vendas ? `${pct(t.vendas, t.leads, 1)} de conversão.` : `${int(t.repassados)} ${t.repassados == 1 ? 'lead repassado' : 'leads repassados'} ao consultor.`;
+  $('#l-numeros').textContent = `Em agosto, antes da automação, a conversão foi de ${String(ANTES.conv_ago).replace('.', ',')}%. A venda só entra aqui quando é marcada como ganho no CRM ou com #ganho no WhatsApp.`;
+  $('#stats').innerHTML =
+    stat(int(t.leads), 'leads', `${int(t.de_anuncio)} vieram de anúncio`) +
+    stat(int(t.vendas), t.vendas == 1 ? 'venda' : 'vendas', conv != null ? compara(+conv.toFixed(1), ANTES.conv_ago, false, '% em agosto') : '') +
+    stat(brlCurto(t.receita), 'em vendas', t.vendas ? 'ticket médio ' + brl(t.receita / t.vendas) : 'nenhuma venda marcada ainda') +
+    stat(brlCurto(t.pipeline_valor), 'em orçamentos abertos', `${int(t.em_aberto)} em negociação`);
+
+  // funil
+  $('#h-funil').textContent = t.leads ? `${pct(t.repassados, t.leads)} chegam ao consultor.` : 'O funil aparece com os primeiros leads.';
+  $('#funil').innerHTML = t.leads ? barras([
+    { nome: 'Leads', n: t.leads }, { nome: 'Qualificados pela Bia', n: t.qualificados }, { nome: 'Repassados ao consultor', n: t.repassados },
+    { nome: 'Com orçamento', n: t.com_orcamento }, { nome: 'Vendas', n: t.vendas }], t.leads) : barras([]);
+
+  // velocidade
+  $('#h-vel').textContent = rs.respondidos ? `Primeira resposta em ${duracao(rs.mediana_seg)}.` : 'Sem conversas no período.';
+  $('#l-vel').textContent = `Antes da Bia, a primeira resposta levava em média ${String(ANTES.resp_media_ago_h).replace('.', ',')} h em agosto e ${String(ANTES.resp_media_set_h).replace('.', ',')} h em setembro. Depois do repasse, o tempo que conta é o do consultor.`;
+  $('#vel').innerHTML =
+    stat(duracao(rs.mediana_seg), 'mediana da 1ª resposta', 'antes: ' + String(ANTES.resp_media_set_h).replace('.', ',') + ' h de média') +
+    stat(pct(rs.ate_1min, rs.respondidos), 'respondidos em até 1 min', `${int(rs.ate_1min)} de ${int(rs.respondidos)}`) +
+    stat(fe.mediana_min == null ? '—' : duracao(fe.mediana_min * 60), 'do repasse ao consultor', `mediana · ${int(fe.atendidos)} de ${int(fe.repassados)} atendidos`) +
+    stat(int(fe.sem_contato), fe.sem_contato == 1 ? 'repasse sem contato' : 'repasses sem contato', fe.sem_contato ? '<span class="pior">precisam de resposta</span>' : '<span class="melhor">nenhum esquecido</span>');
+
+  // por dia
+  const dias = []; for (let d = new Date(f[0]); d < f[1] && d <= new Date(); d.setDate(d.getDate() + 1)) dias.push(d.toISOString().slice(0, 10));
+  const mapa = Object.fromEntries((r.por_dia || []).map(x => [String(x.dia).slice(0, 10), x]));
+  const max = Math.max(1, ...dias.map(d => (mapa[d] || {}).leads || 0));
+  $('#h-dia').textContent = t.leads ? `${(t.leads / Math.max(dias.length, 1)).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} leads por dia.` : 'Sem leads no período.';
+  $('#colunas').innerHTML = dias.map(d => {
+    const x = mapa[d] || { leads: 0, vendas: 0, receita: 0 }; const h = x.leads / max * 100;
+    const rot = new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return `<div class="coluna" data-tip="${esc(rot)}: ${int(x.leads)} ${x.leads == 1 ? 'lead' : 'leads'}${x.vendas ? ' · ' + x.vendas + ' venda(s), ' + brl(x.receita) : ''}">
+      ${x.vendas ? `<i class="venda" style="bottom:calc(${h}% + 6px)"></i>` : ''}<div class="b" style="height:${h}%"></div></div>`;
+  }).join('');
+  $('#eixo').innerHTML = dias.length ? `<span>${data(dias[0] + 'T12:00:00')}</span><span>pico: ${int(max)} leads/dia</span><span>${data(dias[dias.length - 1] + 'T12:00:00')}</span>` : '';
+
+  // anúncios
+  const an = r.anuncios || [];
+  $('#h-anun').textContent = an.length ? `${int(t.de_anuncio)} leads de ${an.length} ${an.length == 1 ? 'anúncio' : 'anúncios'}.` : 'Nenhum lead de anúncio no período.';
+  $('#anuncios').innerHTML = an.length ? `<table class="tabela"><thead><tr><th>Anúncio</th><th>Plataforma</th><th class="d">Leads</th><th class="d">Repassados</th><th class="d">Vendas</th><th class="d">Receita</th></tr></thead><tbody>` +
+    an.map(a => `<tr><td>${esc(a.nome)}<div class="caption">id ${esc(a.anuncio_id)}</div></td><td>${esc(a.app || '—')}</td><td class="d num">${int(a.leads)}</td><td class="d num">${int(a.repassados)}</td><td class="d num">${int(a.vendas)}</td><td class="d num">${brl(a.receita)}</td></tr>`).join('') + '</tbody></table>'
+    : '<div class="vazio">Os anúncios aparecem aqui assim que o primeiro lead clicar no botão de WhatsApp.</div>';
+
+  // pipeline e ganhos
+  const pi = r.pipeline || [], ga = r.vendas || [];
+  $('#h-pipe').textContent = pi.length ? `${brlCurto(t.pipeline_valor)} esperando resposta.` : 'Nenhuma negociação em aberto.';
+  $('#pipeline').innerHTML = pi.length ? pi.map(p => `<a class="item" href="index.html?lead=${encodeURIComponent(p.telefone)}">
+      <span class="n">${esc(p.nome || fone(p.telefone))}${p.veiculo ? ' · ' + esc(p.veiculo) : ''}</span><span class="v num">${p.valor ? brl(p.valor) : '—'}</span>
+      <span class="s">${esc(SITUACAO[p.situacao] || 'Aguardando leitura')}${p.situacao_resumo ? ' · ' + esc(p.situacao_resumo) : ''}${p.agendado_para ? ' · agendado ' + data(p.agendado_para + 'T12:00:00') : ''}</span></a>`).join('')
+    : '<div class="vazio">Tudo resolvido no período.</div>';
+  $('#ganhos').innerHTML = ga.length ? ga.map(v => `<a class="item" href="index.html?lead=${encodeURIComponent(v.telefone)}">
+      <span class="n">${esc(v.nome || fone(v.telefone))}${v.veiculo ? ' · ' + esc(v.veiculo) : ''}</span><span class="v num">${brl(v.valor)}</span>
+      <span class="s">${data(v.venda_at)} · ${v.meta_enviado_at ? '✓ enviado à Meta' : 'aguardando envio à Meta'}</span></a>`).join('')
+    : '<div class="vazio">Nenhuma venda marcada no período.</div>';
+
+  // onde pararam
+  const si = (r.situacoes || []).map(s => ({ nome: SITUACAO[s.situacao] || s.situacao, n: s.n }));
+  const mo = (r.motivos_perda || []).map(m => ({ nome: m.motivo, n: m.n }));
+  const top = si[0];
+  $('#h-onde').textContent = top ? `${top.nome}: ${int(top.n)} ${top.n == 1 ? 'conversa' : 'conversas'}.` : 'Sem conversas paradas.';
+  $('#situacoes').innerHTML = barras(si, si.reduce((s, x) => s + x.n, 0));
+  $('#motivos').innerHTML = barras(mo, mo.reduce((s, x) => s + x.n, 0));
+
+  // sinais
+  const fh = t.leads ? t.fora_horario / t.leads * 100 : null, fr = t.leads ? t.fora_regiao / t.leads * 100 : null;
+  const fuTx = t.leads ? fu.tocados / t.leads * 100 : null;
+  $('#sinais').innerHTML =
+    stat(pct(t.fora_horario, t.leads), 'chegaram com a loja fechada', fh != null ? `setembro: ${ANTES.fora_horario_set}% · agora respondidos na hora` : '') +
+    stat(pct(t.fora_regiao, t.leads), 'fora do DDD 19', fr != null ? compara(+fr.toFixed(1), ANTES.fora_regiao_set, true, '% em setembro') : '') +
+    stat(pct(fu.tocados, t.leads, 1), 'receberam follow-up', fuTx != null ? compara(+fuTx.toFixed(1), ANTES.follow_set, false, '% em setembro') : '') +
+    stat(pct(fu.responderam, fu.tocados), 'responderam ao follow-up', fu.tocados ? compara(Math.round(fu.responderam / fu.tocados * 100), ANTES.follow_resp_set, false, '% em setembro') : 'nenhum toque no período');
+}
+
+/* dica flutuante (hover / toque) */
+function dicas() {
+  const d = $('#dica');
+  const mostra = (e) => { const el = e.target.closest('[data-tip]'); if (!el) { d.classList.add('hidden'); return; }
+    d.textContent = el.dataset.tip; d.classList.remove('hidden');
+    const x = (e.touches ? e.touches[0].clientX : e.clientX), y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const w = d.offsetWidth; d.style.left = Math.min(Math.max(8, x - w / 2), innerWidth - w - 8) + 'px'; d.style.top = (y - 46) + 'px'; };
+  document.addEventListener('mousemove', mostra); document.addEventListener('touchstart', mostra, { passive: true });
+  document.addEventListener('scroll', () => d.classList.add('hidden'), { passive: true });
+}
+
+Bravo.iniciar('relatorio', (cliente) => {
+  sb = cliente; dicas();
+  $('#periodos').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPeriodo(b.dataset.p); });
+  setPeriodo(chave);
+});
+</script>
+</body>
+</html>
