@@ -21,7 +21,10 @@
     return (seg / 3600).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h';
   };
 
-  const STATUS = { triagem: 'Na triagem', atendimento: 'Em atendimento', agendado: 'Agendado', vendido: 'Ganho', perdido: 'Perdido' };
+  const STATUS = { triagem: 'Com o bot', esperando: 'Cliente esperando', atendimento: 'Em atendimento', proposta: 'Proposta enviada',
+    negociando: 'Negociando', agendado: 'Agendado', vendido: 'Ganho', perdido: 'Perdido' };
+  const ha = (s) => { if (!s) return ''; const m = Math.max(0, Math.round((Date.now() - new Date(s).getTime()) / 60000));
+    return m < 60 ? 'há ' + m + ' min' : m < 2880 ? 'há ' + Math.floor(m / 60) + 'h' : 'há ' + Math.floor(m / 1440) + ' dias'; };
   const SERVICO = { ppf: 'PPF', vitrificacao: 'Vitrificação', antivandalismo: 'Antivandalismo', insulfilm: 'Insulfilm', outro: 'Outro', indefinido: 'Não informado' };
   const COBERTURA = { full: 'carro todo', frontal: 'frontal', traseiro: 'traseira', pontos: 'pontos de desgaste', indefinido: 'a definir' };
   const SITUACAO = {
@@ -104,5 +107,5 @@
     aoEntrar(sb, eu || {});
   }
 
-  window.Bravo = { $, esc, brl, brlCurto, int, pct, dataHora, data, fone, duracao, periodo, MESES, STATUS, SERVICO, COBERTURA, SITUACAO, guarda, toast, iniciar };
+  window.Bravo = { $, esc, brl, brlCurto, int, pct, dataHora, data, fone, duracao, ha, periodo, MESES, STATUS, SERVICO, COBERTURA, SITUACAO, guarda, toast, iniciar };
 })();

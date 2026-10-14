@@ -53,7 +53,7 @@
 @media (max-width:900px){
   .linha-l.cab{display:none}
   .linha-l{grid-template-columns:1fr auto;grid-template-areas:"quem st" "oque oque" "nota valor" "acoes acoes";row-gap:10px;padding:16px}
-  .quem{grid-area:quem}.st{grid-area:st;justify-self:end}.oque{grid-area:oque}.nota{grid-area:nota}.valor{grid-area:valor;justify-self:end;text-align:right}.acoes{grid-area:acoes;justify-content:flex-start;flex-wrap:wrap}
+  .quem{grid-area:quem;min-width:0}.quem .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st{grid-area:st;justify-self:end;text-align:right}.oque{grid-area:oque}.nota{grid-area:nota}.valor{grid-area:valor;justify-self:end;text-align:right}.acoes{grid-area:acoes;justify-content:flex-start;flex-wrap:wrap}
 }
 .rodape{color:var(--text-3);font-size:12px;letter-spacing:0;margin:18px 2px 48px;line-height:1.6}
 
@@ -103,7 +103,7 @@
 <div id="raiz-modal"></div>
 
 <script>
-const { $, esc, brl, int, pct, dataHora, fone, STATUS, SERVICO, COBERTURA, periodo, MESES, guarda, toast } = Bravo;
+const { $, esc, brl, int, pct, dataHora, data, fone, ha, STATUS, SERVICO, COBERTURA, periodo, MESES, guarda, toast } = Bravo;
 let sb, leads = [], filtro = 'todos', chave = guarda.ler('periodo-crm', 'mes'), faixa;
 const alvoInicial = new URLSearchParams(location.search).get('lead');
 
@@ -132,12 +132,14 @@ async function carregar() {
 }
 
 function render() {
-  const total = leads.length, ganhos = leads.filter(l => l.status === 'vendido');
+  // números do topo: só quem chegou no período (a lista também traz o que pede ação de antes)
+  const doPer = leads.filter(l => l.no_periodo !== false);
+  const total = doPer.length, ganhos = doPer.filter(l => l.status === 'vendido');
   const receita = ganhos.reduce((s, l) => s + Number(l.venda_valor || 0), 0);
-  const repass = leads.filter(l => l.handoff_at).length;
+  const repass = doPer.filter(l => l.handoff_at).length;
   $('#titulo').textContent = total ? `${int(total)} leads. ${int(ganhos.length)} ${ganhos.length === 1 ? 'ganho' : 'ganhos'}.` : 'Nenhum lead ainda.';
   $('#kpis').innerHTML = [
-    ['Leads', int(total), leads.filter(l => l.veio_de_anuncio).length + ' de anúncio'],
+    ['Leads', int(total), doPer.filter(l => l.veio_de_anuncio).length + ' de anúncio'],
     ['Repassados', int(repass), pct(repass, total) + ' dos leads'],
     ['Ganhos', int(ganhos.length), pct(ganhos.length, total, 1) + ' de conversão'],
     ['Receita', brl(receita), 'no período', 'destaque'],
@@ -145,12 +147,13 @@ function render() {
     ['Na Meta', ganhos.filter(l => l.meta_enviado_at).length + ' de ' + ganhos.length, 'vendas devolvidas']
   ].map(([l, v, s, c]) => `<div class="card kpi ${c || ''}"><div class="caption">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join('');
 
-  const cont = { todos: total }; leads.forEach(l => cont[l.status] = (cont[l.status] || 0) + 1);
-  $('#filtros').innerHTML = ['todos', 'triagem', 'atendimento', 'agendado', 'vendido', 'perdido']
-    .map(k => `<button class="filtro ${filtro === k ? 'on' : ''}" data-f="${k}">${k === 'todos' ? 'Todos' : STATUS[k]}<b>${cont[k] || 0}</b></button>`).join('');
+  const cont = { todos: leads.length, sugestao: leads.filter(l => l.sugestao).length }; leads.forEach(l => cont[l.status] = (cont[l.status] || 0) + 1);
+  $('#filtros').innerHTML = ['todos', 'sugestao', 'esperando', 'triagem', 'atendimento', 'proposta', 'negociando', 'agendado', 'vendido', 'perdido']
+    .filter(k => ['todos', 'vendido', 'perdido'].includes(k) || cont[k] || filtro === k)
+    .map(k => `<button class="filtro ${k === 'sugestao' ? 'ia' : k === 'esperando' ? 'alerta' : ''} ${filtro === k ? 'on' : ''}" data-f="${k}">${k === 'todos' ? 'Todos' : k === 'sugestao' ? 'A IA sugeriu' : STATUS[k]}<b>${cont[k] || 0}</b></button>`).join('');
 
   const q = $('#busca').value.trim().toLowerCase();
-  const vis = leads.filter(l => (filtro === 'todos' || l.status === filtro) &&
+  const vis = leads.filter(l => (filtro === 'todos' || (filtro === 'sugestao' ? !!l.sugestao : l.status === filtro)) &&
     (!q || [l.nome, l.telefone, l.veiculo, fone(l.telefone)].some(x => String(x || '').toLowerCase().includes(q))));
   if (!vis.length) { $('#lista').innerHTML = `<div class="vazio">${total ? 'Nenhum lead com esse filtro.' : 'Nenhum lead nesse período.'}</div>`; return; }
 
@@ -161,16 +164,23 @@ function render() {
       ? `<div class="v num">${brl(l.venda_valor)}</div><div class="s">${l.meta_enviado_at ? '✓ Enviado à Meta' : 'Meta pendente'}</div>`
       : l.orcamento_valor ? `<div class="s">Orçado</div><div class="num">${brl(l.orcamento_valor)}</div>` : '<span class="s">—</span>';
     const fechado = l.status === 'vendido' || l.status === 'perdido';
+    const quando = l.status === 'esperando' ? ha(l.ultima_msg_lead_at)
+      : l.status === 'agendado' && l.agendado_para ? 'dia ' + data(l.agendado_para + 'T12:00:00') : '';
+    const sg = l.sugestao;
+    const sug = !sg ? '' : `<div class="sug ${sg.tipo === 'perdido' ? 'perda' : ''}"><div class="tx">🤖 <b>A IA leu ${sg.tipo === 'venda'
+        ? 'uma venda' + (Number(sg.valor) > 0 ? ' de ' + brl(sg.valor) : '') : 'que o lead foi perdido' + (sg.motivo ? ' · ' + esc(sg.motivo) : '')}</b>${sg.evidencia ? ` <span>· ${esc(sg.evidencia)}</span>` : ''}</div>
+        <div class="bt"><button class="btn sm ${sg.tipo === 'venda' ? 'ganho' : 'perdido'}" data-a="confirmar" data-t="${esc(l.telefone)}">Confirmar</button><button class="btn sm quiet" data-a="descartar" data-t="${esc(l.telefone)}">Não foi</button></div></div>`;
     const acoes = fechado
       ? `<button class="btn sm" data-a="reabrir" data-t="${esc(l.telefone)}">Reabrir</button>`
       : `<button class="btn sm ganho" data-a="ganho" data-t="${esc(l.telefone)}">Ganho</button><button class="btn sm perdido" data-a="perdido" data-t="${esc(l.telefone)}">Perdido</button>`;
     return `<div class="linha-l ${l.telefone === alvoInicial ? 'realce' : ''}">
       <div class="quem"><div class="n">${esc(l.nome || 'Sem nome')}</div><div class="t num">${esc(fone(l.telefone))} · ${dataHora(l.chegou_em)}</div><div class="o">${esc(origem)}</div></div>
-      <div class="oque"><div class="c">${esc(l.veiculo || 'Carro não informado')}</div><div class="t">${esc(serv || 'Serviço não informado')}</div></div>
+      <div class="oque"><div class="c">${esc(l.veiculo || 'Carro não informado')}</div><div class="t">${esc(serv || 'Serviço não informado')}</div>${l.situacao_resumo && !fechado ? `<div class="ia" title="${esc(l.situacao_resumo)}">${esc(l.situacao_resumo)}</div>` : ''}</div>
       <div class="nota"><b class="num">${l.score ?? '—'}</b><span>/100</span></div>
-      <div class="st"><span class="pill p-${l.status}">${STATUS[l.status]}</span></div>
+      <div class="st"><span class="pill p-${l.status}">${STATUS[l.status] || l.status}</span>${quando ? `<span class="q">${esc(quando)}</span>` : ''}</div>
       <div class="valor">${valor}</div>
       <div class="acoes">${acoes}<button class="btn sm quiet" data-a="conversa" data-t="${esc(l.telefone)}">Conversa</button><a class="btn sm quiet" href="https://wa.me/${esc(l.telefone)}" target="_blank" rel="noopener">WhatsApp</a></div>
+      ${sug}
     </div>`;
   }).join('');
 }
@@ -182,10 +192,12 @@ const lead = (t) => leads.find(x => x.telefone === t) || {};
 
 function ganho(t) {
   const l = lead(t), hoje = new Date().toISOString().slice(0, 10);
+  const sg = l.sugestao && l.sugestao.tipo === 'venda' ? l.sugestao : null;
+  const vIni = sg && Number(sg.valor) > 0 ? sg.valor : l.orcamento_valor;
   modal(`<div class="modal"><h3>Marcar como ganho</h3><div class="sub">${esc(l.nome || fone(t))}${l.veiculo ? ' · ' + esc(l.veiculo) : ''}</div>
-    <label class="l" for="m-valor">Valor da venda</label><input id="m-valor" class="in num" inputmode="decimal" placeholder="R$ 4.500" value="${l.orcamento_valor ? Number(l.orcamento_valor).toLocaleString('pt-BR') : ''}">
+    <label class="l" for="m-valor">Valor da venda</label><input id="m-valor" class="in num" inputmode="decimal" placeholder="R$ 4.500" value="${vIni ? Number(vIni).toLocaleString('pt-BR') : ''}">
     <label class="l" for="m-data">Data da venda</label><input id="m-data" class="in" type="date" value="${hoje}" max="${hoje}">
-    <label class="l" for="m-obs">O que foi vendido (opcional)</label><textarea id="m-obs" class="in" placeholder="PPF frontal + vitrificação"></textarea>
+    <label class="l" for="m-obs">O que foi vendido (opcional)</label><textarea id="m-obs" class="in" placeholder="PPF frontal + vitrificação">${sg && sg.evidencia ? esc(sg.evidencia) : ''}</textarea>
     <div class="erro" id="m-erro"></div>
     <div class="pe"><button class="btn quiet" id="m-x">Cancelar</button><button class="btn primary" id="m-ok">Salvar ganho</button></div></div>`);
   $('#m-x').onclick = fechar; setTimeout(() => $('#m-valor').focus(), 60);
@@ -198,15 +210,20 @@ function ganho(t) {
 }
 function perdido(t) {
   const l = lead(t);
+  const sg = l.sugestao && l.sugestao.tipo === 'perdido' ? l.sugestao : null;
+  const mIni = sg ? ({ 'Desistiu': 'Desistiu ou parou de responder', 'Parou de responder': 'Desistiu ou parou de responder', 'Fora de escopo': 'Fora do perfil' }[sg.motivo] || sg.motivo) : '';
   modal(`<div class="modal"><h3>Marcar como perdido</h3><div class="sub">${esc(l.nome || fone(t))}</div>
     <label class="l" for="m-mot">Motivo</label>
     <select id="m-mot" class="in"><option value="">Sem motivo</option><option>Achou caro</option><option>Fechou com concorrente</option><option>Desistiu ou parou de responder</option><option>Fora da região</option><option>Fora do perfil</option><option>Outro</option></select>
     <div class="erro" id="m-erro"></div>
     <div class="pe"><button class="btn quiet" id="m-x">Cancelar</button><button class="btn primary" id="m-ok">Salvar</button></div></div>`);
   $('#m-x').onclick = fechar;
+  if (mIni) $('#m-mot').value = mIni;
   $('#m-ok').onclick = () => executar({ p_telefone: t, p_acao: 'perdido', p_motivo: $('#m-mot').value || null }, 'Marcado como perdido');
 }
 const reabrir = (t) => executar({ p_telefone: t, p_acao: 'reabrir' }, 'Lead reaberto');
+const confirmar = (t) => { const sg = lead(t).sugestao || {}; (sg.tipo === 'venda' ? ganho : perdido)(t); };
+const descartar = (t) => executar({ p_telefone: t, p_acao: 'descartar_sugestao' }, 'Sugestão descartada');
 
 async function executar(args, msg) {
   const b = $('#m-ok'); if (b) b.disabled = true;
@@ -232,7 +249,7 @@ async function conversa(t) {
 }
 
 function csv() {
-  const cols = [['chegou_em', 'Chegou em'], ['nome', 'Nome'], ['telefone', 'Telefone'], ['status', 'Status'], ['veiculo', 'Veículo'], ['servico', 'Serviço'], ['cobertura', 'Cobertura'], ['score', 'Nota'], ['veio_de_anuncio', 'Anúncio'], ['anuncio_app', 'Plataforma'], ['anuncio_id', 'ID do anúncio'], ['orcamento_valor', 'Orçado'], ['venda_valor', 'Venda'], ['venda_at', 'Data da venda'], ['desfecho_motivo', 'Motivo / observação'], ['meta_enviado_at', 'Enviado à Meta']];
+  const cols = [['chegou_em', 'Chegou em'], ['nome', 'Nome'], ['telefone', 'Telefone'], ['status', 'Status'], ['situacao_resumo', 'Onde parou (IA)'], ['agendado_para', 'Agendado para'], ['veiculo', 'Veículo'], ['servico', 'Serviço'], ['cobertura', 'Cobertura'], ['score', 'Nota'], ['veio_de_anuncio', 'Anúncio'], ['anuncio_app', 'Plataforma'], ['anuncio_id', 'ID do anúncio'], ['orcamento_valor', 'Orçado'], ['venda_valor', 'Venda'], ['venda_at', 'Data da venda'], ['desfecho_motivo', 'Motivo / observação'], ['meta_enviado_at', 'Enviado à Meta']];
   const linhas = [cols.map(c => c[1]).join(';')].concat(leads.map(l => cols.map(([k]) => {
     let v = l[k]; if (k === 'status') v = STATUS[v]; if (k === 'veio_de_anuncio') v = v ? 'sim' : 'não';
     if ((/_at$/.test(k) || k === 'chegou_em') && v) v = new Date(v).toLocaleString('pt-BR');
@@ -253,7 +270,7 @@ Bravo.iniciar('crm', (cliente) => {
   $('#b-atual').onclick = carregar; $('#b-csv').onclick = csv;
   $('#lista').addEventListener('click', e => {
     const b = e.target.closest('[data-a]'); if (!b) return;
-    ({ ganho, perdido, reabrir, conversa })[b.dataset.a](b.dataset.t);
+    ({ ganho, perdido, reabrir, conversa, confirmar, descartar })[b.dataset.a](b.dataset.t);
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fechar(); });
   setPeriodo(chave);
