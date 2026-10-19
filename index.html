@@ -26,6 +26,9 @@
 @media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.kpi .v{font-size:23px}}
 
 .ferramentas{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.ferramentas.qual{margin-top:-4px}
+.ferramentas .in.mini{height:32px;width:auto;min-width:76px;font-size:13px;padding:0 10px;border-radius:980px}
+#f-resumo{margin-left:auto}
 .filtros{display:flex;gap:6px;overflow-x:auto;max-width:100%;scrollbar-width:none}
 .filtros::-webkit-scrollbar{display:none}
 .filtro{height:32px;padding:0 14px;border-radius:980px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:13px;cursor:pointer;white-space:nowrap;transition:all .2s var(--ease)}
@@ -80,7 +83,7 @@
         <h1 class="display" id="titulo">Carregando…</h1>
         <div class="periodo">
           <div class="seg" id="periodos">
-            <button data-p="hoje">Hoje</button><button data-p="7d">7 dias</button><button data-p="mes">Este mês</button><button data-p="mesant">Mês passado</button><button data-p="custom">Período</button>
+            <button data-p="hoje">Hoje</button><button data-p="ontem">Ontem</button><button data-p="semana">Semana</button><button data-p="7d">7 dias</button><button data-p="mes">Este mês</button><button data-p="mesant">Mês passado</button><button data-p="custom">Período</button>
           </div>
           <div class="datas hidden" id="datas"><input type="date" class="in" id="d-de"><span class="caption">até</span><input type="date" class="in" id="d-ate"><button class="btn sm" id="d-ok">Aplicar</button></div>
         </div>
@@ -96,6 +99,15 @@
       <button class="btn sm quiet" id="b-atual">Atualizar</button>
     </section>
 
+    <section class="ferramentas qual">
+      <span class="caption">Nota</span>
+      <div class="seg" id="f-nota"><button data-n="todas" class="on">Todas</button><button data-n="acima">70+</button><button data-n="abaixo">Abaixo de 70</button><button data-n="min">Mínima</button></div>
+      <input class="in mini hidden" id="f-nota-min" type="number" min="0" max="100" step="5" value="80" aria-label="Nota mínima">
+      <span class="caption" style="margin-left:8px">Origem</span>
+      <select class="in mini" id="f-plat" aria-label="Plataforma"><option value="">Todas</option></select>
+      <span class="caption" id="f-resumo"></span>
+    </section>
+
     <section class="card lista" id="lista"></section>
     <p class="rodape">Ganho e Perdido aqui fazem o mesmo que <b>#ganho valor</b> e <b>#perdido</b> no WhatsApp. Tudo cai no mesmo lugar e aparece no Relatório na hora. "Meta" mostra se a venda já foi devolvida para os anúncios.</p>
   </div>
@@ -104,7 +116,7 @@
 
 <script>
 const { $, esc, brl, int, pct, dataHora, data, fone, ha, STATUS, SERVICO, COBERTURA, periodo, MESES, guarda, toast } = Bravo;
-let sb, leads = [], filtro = 'todos', chave = guarda.ler('periodo-crm', 'mes'), faixa;
+let sb, leads = [], todosLeads = [], filtro = 'todos', chave = guarda.ler('periodo-crm', 'mes'), faixa;
 const alvoInicial = new URLSearchParams(location.search).get('lead');
 
 function setPeriodo(p) {
@@ -117,21 +129,40 @@ function setPeriodo(p) {
 
 async function carregar() {
   faixa = periodo(chave, $('#d-de').value, $('#d-ate').value);
-  const rotulo = { hoje: 'Hoje', '7d': 'Últimos 7 dias', mes: MESES[faixa[0].getMonth()], mesant: MESES[faixa[0].getMonth()], custom: 'Período' }[chave];
+  const rotulo = { hoje: 'Hoje', ontem: 'Ontem', semana: 'Esta semana', '7d': 'Últimos 7 dias', mes: MESES[faixa[0].getMonth()], mesant: MESES[faixa[0].getMonth()], custom: 'Período' }[chave];
   $('#sobre').textContent = 'Comercial · ' + rotulo;
   $('#lista').innerHTML = '<div class="vazio">Carregando…</div>';
   const { data, error } = await sb.rpc('bravo_painel_leads', { p_de: faixa[0].toISOString(), p_ate: faixa[1].toISOString() });
   if (error) { $('#lista').innerHTML = `<div class="vazio">Não consegui carregar: ${esc(error.message)}</div>`; return; }
-  leads = data || [];
+  todosLeads = data || []; leads = todosLeads;
   render();
   if (alvoInicial && !carregar._abriu) {
     carregar._abriu = true;
-    if (leads.some(l => l.telefone === alvoInicial)) { $('#busca').value = alvoInicial; render(); conversa(alvoInicial); }
+    if (todosLeads.some(l => l.telefone === alvoInicial)) { fNota = 'todas'; $('#f-plat').value = ''; document.querySelectorAll('#f-nota button').forEach(b => b.classList.toggle('on', b.dataset.n === 'todas')); $('#busca').value = alvoInicial; render(); conversa(alvoInicial); }
     else toast('Esse lead não está no período selecionado.');
   }
 }
 
+// filtro de nota e de origem: vale pra lista e pros números do topo
+let fNota = guarda.ler('crm-nota', 'todas');
+const passaNota = (l) => {
+  const n = l.score === null || l.score === undefined ? null : Number(l.score);
+  if (fNota === 'todas') return true;
+  if (n === null) return false;
+  if (fNota === 'acima') return n >= 70;
+  if (fNota === 'abaixo') return n < 70;
+  return n >= Number($('#f-nota-min').value || 0);
+};
+const passaPlat = (l) => !$('#f-plat').value || l.plataforma === $('#f-plat').value;
 function render() {
+  // plataformas que aparecem no período (pro seletor)
+  const plats = [...new Set(todosLeads.map(l => l.plataforma).filter(Boolean))].sort();
+  const sel = $('#f-plat'), atual = sel.value;
+  sel.innerHTML = '<option value="">Todas</option>' + plats.map(p => `<option ${p === atual ? 'selected' : ''}>${esc(p)}</option>`).join('');
+  leads = todosLeads.filter(l => passaNota(l) && passaPlat(l));
+  const filtrando = fNota !== 'todas' || sel.value;
+  const comNotaF = leads.filter(l => l.score !== null && l.score !== undefined);
+  $('#f-resumo').textContent = filtrando ? `${int(leads.length)} de ${int(todosLeads.length)} leads${comNotaF.length ? ' · nota média ' + Math.round(comNotaF.reduce((s, l) => s + Number(l.score), 0) / comNotaF.length) : ''}` : '';
   // números do topo: só quem chegou no período (a lista também traz o que pede ação de antes)
   const doPer = leads.filter(l => l.no_periodo !== false);
   const total = doPer.length, ganhos = doPer.filter(l => l.status === 'vendido');
@@ -141,7 +172,7 @@ function render() {
   $('#titulo').textContent = total ? `${int(total)} leads. ${int(ganhos.length)} ${ganhos.length === 1 ? 'ganho' : 'ganhos'}.` : 'Nenhum lead ainda.';
   $('#kpis').innerHTML = [
     ['Leads', int(total), int(repass) + ' repassados · ' + doPer.filter(l => l.veio_de_anuncio).length + ' de anúncio'],
-    ['Nota média', comNota.length ? Math.round(comNota.reduce((s, l) => s + Number(l.score), 0) / comNota.length) : '—', comNota.length ? pct(comNota.filter(l => Number(l.score) >= 60).length, comNota.length) + ' qualificados (60+)' : 'sem nota no período'],
+    ['Nota média', comNota.length ? Math.round(comNota.reduce((s, l) => s + Number(l.score), 0) / comNota.length) : '—', comNota.length ? pct(comNota.filter(l => Number(l.score) >= 70).length, comNota.length) + ' com nota 70+' : 'sem nota no período'],
     ['Ganhos', int(ganhos.length), pct(ganhos.length, total, 1) + ' de conversão'],
     ['Receita', brl(receita), 'no período', 'destaque'],
     ['Ticket médio', ganhos.length ? brl(receita / ganhos.length) : '—', int(ganhos.length) + ' venda(s)'],
@@ -189,7 +220,7 @@ function render() {
 /* ---------- ações ---------- */
 const modal = (html) => { $('#raiz-modal').innerHTML = `<div class="veu" id="veu">${html}</div>`; $('#veu').addEventListener('click', e => { if (e.target.id === 'veu') fechar(); }); };
 const fechar = () => { $('#raiz-modal').innerHTML = ''; };
-const lead = (t) => leads.find(x => x.telefone === t) || {};
+const lead = (t) => todosLeads.find(x => x.telefone === t) || {};
 
 function ganho(t) {
   const l = lead(t), hoje = new Date().toISOString().slice(0, 10);
@@ -268,6 +299,11 @@ Bravo.iniciar('crm', (cliente) => {
   $('#d-ok').onclick = carregar;
   $('#filtros').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { filtro = b.dataset.f; render(); } });
   $('#busca').addEventListener('input', render);
+  const marcaNota = () => { document.querySelectorAll('#f-nota button').forEach(b => b.classList.toggle('on', b.dataset.n === fNota)); $('#f-nota-min').classList.toggle('hidden', fNota !== 'min'); };
+  $('#f-nota').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return; fNota = b.dataset.n; guarda.gravar('crm-nota', fNota); marcaNota(); render(); });
+  $('#f-nota-min').addEventListener('input', render);
+  $('#f-plat').addEventListener('change', render);
+  marcaNota();
   $('#b-atual').onclick = carregar; $('#b-csv').onclick = csv;
   $('#lista').addEventListener('click', e => {
     const b = e.target.closest('[data-a]'); if (!b) return;

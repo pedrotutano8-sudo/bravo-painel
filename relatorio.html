@@ -101,6 +101,10 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
       <div class="dupla" style="margin-top:14px"><div><div class="subt">Notas do período</div><div class="card barras" id="nota-classes"></div></div>
         <div><div class="subt">Acima da meta que não fecharam</div><div class="card itens" id="nota-nao"></div></div></div></section>
 
+    <section class="bloco"><div class="eyebrow">Origem × qualidade</div><h2 class="headline" id="h-origem"></h2><p class="lede" id="l-origem"></p>
+      <div class="subt">Por plataforma</div><div class="card rolagem" id="plataformas"></div>
+      <div class="subt" style="margin-top:28px">Por campanha</div><div class="card rolagem" id="campanhas"></div></section>
+
     <section class="bloco"><div class="eyebrow">Funil</div><h2 class="headline" id="h-funil"></h2><p class="lede">Do primeiro "oi" até a venda registrada. Cada barra mostra quantos leads chegaram àquela etapa.</p><div class="card barras" id="funil"></div></section>
 
     <section class="bloco"><div class="eyebrow">Velocidade</div><h2 class="headline" id="h-vel"></h2><p class="lede" id="l-vel"></p><div class="stats" id="vel"></div></section>
@@ -227,6 +231,23 @@ function desenhar(r, f, nomePer) {
       <span class="s">${x.detalhe ? esc(String(x.detalhe).slice(0, 140)) : (x.repassado ? 'sem leitura ainda' : 'ainda com a Bia')}${x.orcamento_valor ? ' · orçado ' + brl(x.orcamento_valor) : ''}</span></a>`).join('')
     : `<div class="vazio">${A.leads ? 'Todos os leads acima da meta fecharam.' : 'Nenhum lead acima da meta no período.'}</div>`;
 
+  // origem × qualidade
+  const pl = (r.plataformas || []).filter(p => p.leads), cp = r.campanhas || [];
+  const comN = pl.filter(p => p.com_nota >= 3 && p.nota_media != null).sort((a, b) => b.nota_media - a.nota_media);
+  $('#h-origem').textContent = comN.length >= 2 ? `${comN[0].plataforma}: nota ${comN[0].nota_media}. ${comN[comN.length - 1].plataforma}: ${comN[comN.length - 1].nota_media}.`
+    : pl.length ? 'De onde vem o lead bom.' : 'Sem leads no período.';
+  $('#l-origem').textContent = 'Nota média, % de leads com nota ' + meta + '+ e conversão por origem. Plataforma com nota baixa pede ajuste de público ou de posicionamento; campanha com nota baixa pede revisão de criativo e segmentação. Origens com menos de 3 leads com nota ainda não dizem muito.';
+  const pctN = (a, b) => b ? pct(a, b) : '—';
+  const corN = (n) => n == null ? '' : n >= meta ? 'meta-ok' : 'meta-ruim';
+  $('#plataformas').innerHTML = pl.length ? `<table class="tabela"><thead><tr><th>Origem</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota ${meta}+</th><th class="d">Quentes</th><th class="d">Desqualif.</th><th class="d">Vendas</th><th class="d">Conversão</th><th class="d">Receita</th></tr></thead><tbody>` +
+    pl.map(p => `<tr><td>${esc(p.plataforma)}</td><td class="d num">${int(p.leads)}</td><td class="d num ${corN(p.nota_media)}">${p.nota_media ?? '—'}</td><td class="d num">${pctN(p.acima, p.com_nota)}</td><td class="d num">${int(p.quentes)}</td><td class="d num">${int(p.desqualificados)}</td><td class="d num">${int(p.vendas)}</td><td class="d num">${pctN(p.vendas, p.leads)}</td><td class="d num">${brl(p.receita)}</td></tr>`).join('') + '</tbody></table>'
+    : '<div class="vazio">Nenhum lead no período.</div>';
+  const temNomes = cp.some(c => c.campanha !== 'Campanha não identificada');
+  $('#campanhas').innerHTML = !cp.length ? '<div class="vazio">Nenhum lead de anúncio no período.</div>'
+    : (temNomes ? '' : '<div class="vazio">Os nomes das campanhas aparecem quando a leitura diária da Meta (BRAVO 8) estiver ligada. Por enquanto, veja por anúncio mais abaixo.</div>') +
+      (temNomes ? `<table class="tabela"><thead><tr><th>Campanha</th><th class="d">Anúncios</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota ${meta}+</th><th class="d">Vendas</th><th class="d">Receita</th></tr></thead><tbody>` +
+      cp.map(c => `<tr><td>${esc(c.campanha)}</td><td class="d num">${int(c.anuncios)}</td><td class="d num">${int(c.leads)}</td><td class="d num ${corN(c.nota_media)}">${c.nota_media ?? '—'}</td><td class="d num">${pctN(c.acima, c.com_nota)}</td><td class="d num">${int(c.vendas)}</td><td class="d num">${brl(c.receita)}</td></tr>`).join('') + '</tbody></table>' : '');
+
   // funil
   $('#h-funil').textContent = t.leads ? `${pct(t.repassados, t.leads)} chegam ao consultor.` : 'O funil aparece com os primeiros leads.';
   $('#funil').innerHTML = t.leads ? barras([
@@ -259,7 +280,7 @@ function desenhar(r, f, nomePer) {
   const an = r.anuncios || [];
   $('#h-anun').textContent = an.length ? `${int(t.de_anuncio)} leads de ${an.length} ${an.length == 1 ? 'anúncio' : 'anúncios'}.` : 'Nenhum lead de anúncio no período.';
   $('#anuncios').innerHTML = an.length ? `<table class="tabela"><thead><tr><th>Anúncio</th><th>Plataforma</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota 70+</th><th class="d">Repassados</th><th class="d">Vendas</th><th class="d">Receita</th></tr></thead><tbody>` +
-    an.map(a => `<tr><td>${esc(a.nome)}<div class="caption">id ${esc(a.anuncio_id)}</div></td><td>${esc(a.app || '—')}</td><td class="d num">${int(a.leads)}</td><td class="d num ${a.nota_media == null ? '' : a.nota_media >= META_NOTA ? 'meta-ok' : 'meta-ruim'}">${a.nota_media ?? '—'}</td><td class="d num">${a.com_nota ? pct(a.acima, a.com_nota) : '—'}</td><td class="d num">${int(a.repassados)}</td><td class="d num">${int(a.vendas)}</td><td class="d num">${brl(a.receita)}</td></tr>`).join('') + '</tbody></table>'
+    an.map(a => `<tr><td>${esc(a.nome)}<div class="caption">${a.campanha ? esc(a.campanha) + (a.conjunto ? ' · ' + esc(a.conjunto) : '') + ' · ' : ''}id ${esc(a.anuncio_id)}</div></td><td>${esc(a.app || '—')}</td><td class="d num">${int(a.leads)}</td><td class="d num ${a.nota_media == null ? '' : a.nota_media >= META_NOTA ? 'meta-ok' : 'meta-ruim'}">${a.nota_media ?? '—'}</td><td class="d num">${a.com_nota ? pct(a.acima, a.com_nota) : '—'}</td><td class="d num">${int(a.repassados)}</td><td class="d num">${int(a.vendas)}</td><td class="d num">${brl(a.receita)}</td></tr>`).join('') + '</tbody></table>'
     : '<div class="vazio">Os anúncios aparecem aqui assim que o primeiro lead clicar no botão de WhatsApp.</div>';
 
   // pipeline e ganhos
