@@ -22,6 +22,45 @@
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:980px;margin-left:6px}
 .tag.perdido{background:var(--bad-soft);color:var(--bad)}.tag.aberto{background:var(--info-soft);color:var(--info)}
 .nota-b{font-weight:700}
+/* canal */
+.duelo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.canal{padding:24px 22px;position:relative}
+.canal .nome{font-size:21px;font-weight:600;letter-spacing:-.01em}
+.canal .grande{font-size:clamp(40px,5vw,56px);font-weight:700;letter-spacing:-.03em;line-height:1;margin:14px 0 4px}
+.canal .rot{font-size:13px;color:var(--text-3)}
+.canal .linhas{margin-top:18px;display:grid;gap:8px;font-size:14px}
+.canal .linhas div{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px}
+.canal .linhas b{font-weight:600}
+.canal.vence{box-shadow:0 0 0 2px var(--ok) inset}
+.selo{position:absolute;top:18px;right:18px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:980px;background:var(--ok-soft);color:var(--ok)}
+/* ranking de criativos */
+.rk{display:grid;grid-template-columns:36px 1fr 120px;gap:6px 14px;padding:16px 22px;border-top:1px solid var(--border);align-items:center}
+.rk:first-child{border-top:0}
+.rk .pos{font-size:21px;font-weight:700;color:var(--text-3)}
+.rk .n{font-weight:600}
+.rk .s{font-size:13px;color:var(--text-2)}
+.rk .big{text-align:right;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.rk .big small{display:block;font-size:12px;font-weight:400;color:var(--text-3);letter-spacing:0}
+.rk .comp{grid-column:2/-1;display:flex;height:10px;border-radius:980px;overflow:hidden;background:var(--neutral-soft)}
+.rk .comp i{display:block;height:100%}
+.rk.pequena{opacity:.6}
+@media (max-width:560px){.rk{grid-template-columns:28px 1fr 84px;padding:14px 16px}.rk .big{font-size:22px}}
+/* IA */
+.ia-barra{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:-12px 0 24px}
+.ia-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.ia-grid{grid-template-columns:1fr}}
+.ia-card{padding:22px}
+.ia-card h3{font-size:17px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em}
+.ia-card ul{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+.ia-card li{font-size:15px;line-height:1.45}
+.ia-card li .t{font-weight:600}
+.ia-card li .d{display:block;color:var(--text-2);font-size:14px;margin-top:2px}
+.ia-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:980px;background:var(--accent-soft);color:var(--accent);margin-right:6px;text-transform:uppercase;letter-spacing:.02em}
+.ia-tag.escalar{background:var(--ok-soft);color:var(--ok)}.ia-tag.pausar{background:var(--bad-soft);color:var(--bad)}.ia-tag.manter{background:var(--info-soft);color:var(--info)}.ia-tag.testar{background:var(--neutral-soft);color:var(--text-2)}
+.rk .n .ia-tag{margin:0 0 0 6px;vertical-align:2px;font-size:10px}
+.ia-resumo{font-size:19px;line-height:1.5;margin:0 0 20px;max-width:880px}
+.gancho{font-weight:600}
+.ia-card.largo{grid-column:1/-1}
 @media (max-width:560px){.grupos th,.grupos td{padding:12px 10px;font-size:14px}}
 section.bloco{padding:72px 0;border-top:1px solid var(--border)}
 .bloco .lede{margin-bottom:36px}
@@ -69,8 +108,8 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
 .itens .item .n{font-weight:600}
 .itens .item .s{font-size:13px;color:var(--text-2);grid-column:1/-1}
 .itens .item .v{font-weight:600;text-align:right}
-.dupla{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:860px){.dupla{grid-template-columns:1fr}}
+.dupla{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.dupla>div{min-width:0}
+@media (max-width:860px){.dupla{grid-template-columns:minmax(0,1fr)}}
 .subt{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 14px}
 .vazio{padding:36px 22px;color:var(--text-2);text-align:center;font-size:15px}
 .fim{padding:48px 0 80px;border-top:1px solid var(--border);color:var(--text-3);font-size:13px;line-height:1.7;letter-spacing:0}
@@ -101,9 +140,14 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
       <div class="dupla" style="margin-top:14px"><div><div class="subt">Notas do período</div><div class="card barras" id="nota-classes"></div></div>
         <div><div class="subt">Acima da meta que não fecharam</div><div class="card itens" id="nota-nao"></div></div></div></section>
 
-    <section class="bloco"><div class="eyebrow">Origem × qualidade</div><h2 class="headline" id="h-origem"></h2><p class="lede" id="l-origem"></p>
-      <div class="subt">Por plataforma</div><div class="card rolagem" id="plataformas"></div>
-      <div class="subt" style="margin-top:28px">Por campanha</div><div class="card rolagem" id="campanhas"></div></section>
+    <section class="bloco"><div class="eyebrow">Canal</div><h2 class="headline" id="h-canal"></h2><p class="lede" id="l-canal"></p>
+      <div class="duelo" id="duelo"></div></section>
+
+    <section class="bloco"><div class="eyebrow">Criativos</div><h2 class="headline" id="h-cri"></h2><p class="lede" id="l-cri"></p>
+      <div class="legenda-c" style="padding:0 0 14px"><span><i class="ponto" style="background:var(--ok)"></i>Nota 70+</span><span><i class="ponto" style="background:var(--warn)"></i>40 a 69</span><span><i class="ponto" style="background:var(--bad)"></i>Abaixo de 40</span><span><i class="ponto" style="background:var(--neutral-soft)"></i>Sem nota</span></div>
+      <div class="card itens" id="ranking"></div>
+      <div class="dupla" style="margin-top:14px"><div><div class="subt">Por que ficaram abaixo de 70</div><div class="card barras" id="abaixo-motivos"></div></div>
+        <div><div class="subt">Por campanha</div><div class="card rolagem" id="campanhas"></div></div></div></section>
 
     <section class="bloco"><div class="eyebrow">Funil</div><h2 class="headline" id="h-funil"></h2><p class="lede">Do primeiro "oi" até a venda registrada. Cada barra mostra quantos leads chegaram àquela etapa.</p><div class="card barras" id="funil"></div></section>
 
@@ -113,8 +157,6 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
       <div class="card"><div class="colunas" id="colunas" role="img" aria-label="Leads por dia"></div><div class="eixo" id="eixo"></div>
       <div class="legenda-c"><span><i class="ponto" style="background:var(--accent)"></i>Leads</span><span><i class="ponto" style="background:var(--ok)"></i>Dia com venda</span></div></div></section>
 
-    <section class="bloco"><div class="eyebrow">Anúncios</div><h2 class="headline" id="h-anun"></h2><p class="lede">Leads que chegaram pelo botão de WhatsApp dos anúncios, agrupados por anúncio.</p><div class="card rolagem" id="anuncios"></div></section>
-
     <section class="bloco"><div class="eyebrow">Pipeline</div><h2 class="headline" id="h-pipe"></h2><p class="lede">Leads repassados que ainda não têm desfecho. Toque num nome para abrir no CRM.</p>
       <div class="dupla"><div><div class="subt">Em aberto</div><div class="card itens" id="pipeline"></div></div><div><div class="subt">Ganhos</div><div class="card itens" id="ganhos"></div></div></div></section>
 
@@ -122,6 +164,11 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
       <div class="dupla"><div><div class="subt">Conversas em aberto</div><div class="card barras" id="situacoes"></div></div><div><div class="subt">Motivos de perda</div><div class="card barras" id="motivos"></div></div></div></section>
 
     <section class="bloco"><div class="eyebrow">Sinais</div><h2 class="headline">O que mudou depois da Bia.</h2><p class="lede">Os mesmos indicadores dos diagnósticos de agosto e setembro, agora medidos sozinhos.</p><div class="stats" id="sinais"></div></section>
+
+    <section class="bloco" id="sec-ia"><div class="eyebrow">Sugestões da IA</div><h2 class="headline" id="h-ia">Leitura do período.</h2>
+      <p class="lede" id="l-ia">A IA lê os números deste relatório e as conversas dos leads do período e sugere o que fazer no tráfego, nos criativos e no comercial.</p>
+      <div class="ia-barra"><button class="btn primary sm" id="b-ia">Gerar análise deste período</button><span class="caption" id="ia-status"></span></div>
+      <div id="ia"></div></section>
 
     <footer class="fim">
       Liderate Digital · Relatório ao vivo Bravo Film. Dados do CRM em tempo real: o que for marcado no CRM ou com #ganho no WhatsApp aparece aqui ao recarregar.<br>
@@ -132,7 +179,7 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
 <div id="dica" class="hidden"></div>
 
 <script>
-const { $, esc, brl, brlCurto, int, pct, data, fone, duracao, periodo, MESES, SITUACAO, SERVICO, guarda } = Bravo;
+const { $, esc, brl, brlCurto, int, pct, data, dataHora, fone, duracao, periodo, MESES, SITUACAO, SERVICO, guarda } = Bravo;
 // Referências dos diagnósticos (TINTIM, antes da Bia)
 const ANTES = { conv_ago: 2.6, resp_media_set_h: 9.5, resp_media_ago_h: 7.5, follow_set: 12.4, follow_resp_set: 40, fora_horario_set: 73, fora_regiao_set: 49.6 };
 let sb, chave = guarda.ler('periodo-rel', 'mes');
@@ -157,6 +204,48 @@ async function carregar() {
   const { data: r, error } = await sb.rpc('bravo_painel_relatorio', { p_de: f[0].toISOString(), p_ate: f[1].toISOString() });
   if (error) { $('#titulo').textContent = 'Não consegui carregar.'; $('#lede').textContent = error.message; return; }
   desenhar(r, f, nomePer);
+  carregarIA(f);
+}
+
+/* ---------- sugestões da IA (BRAVO 9 gera, o painel só mostra e pede) ---------- */
+let faixaIA, iaTimer;
+async function carregarIA(f) {
+  faixaIA = f; clearTimeout(iaTimer);
+  const { data: a, error } = await sb.rpc('bravo_painel_analise', { p_de: f[0].toISOString(), p_ate: f[1].toISOString() });
+  if (error) { $('#ia-status').textContent = 'Não consegui carregar a análise: ' + error.message; return; }
+  desenharIA(a || {});
+  if (a && a.pendente) iaTimer = setTimeout(() => { if (faixaIA === f) carregarIA(f); }, 10000);
+}
+async function pedirIA() {
+  if (!faixaIA) return;
+  $('#b-ia').disabled = true;
+  const { error } = await sb.rpc('bravo_painel_pedir_analise', { p_de: faixaIA[0].toISOString(), p_ate: faixaIA[1].toISOString() });
+  if (error) { $('#ia-status').textContent = error.message; $('#b-ia').disabled = false; return; }
+  carregarIA(faixaIA);
+}
+function classeV(v) { v = String(v || '').toLowerCase(); return /escal/.test(v) ? 'escalar' : /paus/.test(v) ? 'pausar' : /testar/.test(v) ? 'testar' : 'manter'; }
+function desenharIA(a) {
+  const p = a.pronta, c = (p && p.conteudo) || null;
+  const lista = (v) => Array.isArray(v) ? v.filter(Boolean) : [];
+  $('#b-ia').disabled = !!a.pendente;
+  $('#b-ia').textContent = a.pendente ? 'Gerando…' : p && p.mesmo_periodo ? 'Gerar de novo' : 'Gerar análise deste período';
+  $('#ia-status').textContent = a.pendente ? 'A IA está lendo os números e as conversas do período. Leva de 1 a 3 minutos.'
+    : a.ultimo_erro ? 'A última tentativa falhou: ' + a.ultimo_erro
+    : p ? `Gerada em ${dataHora(p.gerado_at)} · período ${data(p.de)} a ${data(new Date(new Date(p.ate) - 1))}${p.mesmo_periodo ? '' : ' · é de outro período, gere uma deste'}`
+    : 'Ainda não há análise deste período.';
+  if (!c) { $('#ia').innerHTML = ''; return; }
+  const card = (tit, itens, larga) => itens ? `<div class="card ia-card ${larga ? 'largo' : ''}"><h3>${tit}</h3><ul>${itens}</ul></div>` : '';
+  const sug = lista(c.sugestoes).map(x => `<li><span class="ia-tag">${esc(x.area || 'geral')}</span><span class="t">${esc(x.titulo || '')}</span><span class="d">${esc(x.acao || '')}${x.por_que ? ' · ' + esc(x.por_que) : ''}</span></li>`).join('');
+  const cri = lista(c.criativos).map(x => { const v = String(x.veredito || '').toLowerCase(); const k = classeV(x.veredito);
+    return `<li><span class="ia-tag ${k}">${esc(x.veredito || '')}</span><span class="t">${esc(x.anuncio || '')}</span><span class="d">${esc(x.por_que || '')}</span></li>`; }).join('');
+  const ide = lista(c.ideias_criativos).map(x => `<li><span class="gancho">“${esc(x.gancho || '')}”</span><span class="d">${esc([x.formato, x.para_quem].filter(Boolean).join(' · '))}${x.por_que ? ' · ' + esc(x.por_que) : ''}</span></li>`).join('');
+  const duv = lista(c.duvidas_frequentes).map(x => `<li><span class="t">${esc(x.duvida || '')}</span>${x.vezes ? ` <span class="caption">${esc(String(x.vezes))}×</span>` : ''}<span class="d">${esc(x.como_usar || '')}</span></li>`).join('');
+  const obj = lista(c.objecoes).map(x => `<li><span class="t">${esc(x.objecao || '')}</span>${x.vezes ? ` <span class="caption">${esc(String(x.vezes))}×</span>` : ''}<span class="d">${esc(x.como_tratar || '')}</span></li>`).join('');
+  const ale = lista(c.alertas).map(x => `<li>${esc(typeof x === 'string' ? x : JSON.stringify(x))}</li>`).join('');
+  const canal = c.canal && c.canal.melhor ? `<li><span class="t">${esc(c.canal.melhor)}</span><span class="d">${esc(c.canal.por_que || '')}</span></li>` : '';
+  $('#ia').innerHTML = (c.resumo ? `<p class="ia-resumo">${esc(c.resumo)}</p>` : '') + `<div class="ia-grid">` +
+    card('O que fazer agora', sug, true) + card('Melhor canal', canal) + card('Criativos', cri) +
+    card('Ideias de criativo', ide) + card('Dúvidas mais comuns dos clientes', duv) + card('Objeções', obj) + card('Atenção', ale) + `</div>`;
 }
 
 const stat = (v, r, c) => `<div class="card stat"><div class="v num">${v}</div><div class="r">${r}</div>${c ? `<div class="c">${c}</div>` : ''}</div>`;
@@ -231,22 +320,57 @@ function desenhar(r, f, nomePer) {
       <span class="s">${x.detalhe ? esc(String(x.detalhe).slice(0, 140)) : (x.repassado ? 'sem leitura ainda' : 'ainda com a Bia')}${x.orcamento_valor ? ' · orçado ' + brl(x.orcamento_valor) : ''}</span></a>`).join('')
     : `<div class="vazio">${A.leads ? 'Todos os leads acima da meta fecharam.' : 'Nenhum lead acima da meta no período.'}</div>`;
 
-  // origem × qualidade
-  const pl = (r.plataformas || []).filter(p => p.leads), cp = r.campanhas || [];
-  const comN = pl.filter(p => p.com_nota >= 3 && p.nota_media != null).sort((a, b) => b.nota_media - a.nota_media);
-  $('#h-origem').textContent = comN.length >= 2 ? `${comN[0].plataforma}: nota ${comN[0].nota_media}. ${comN[comN.length - 1].plataforma}: ${comN[comN.length - 1].nota_media}.`
-    : pl.length ? 'De onde vem o lead bom.' : 'Sem leads no período.';
-  $('#l-origem').textContent = 'Nota média, % de leads com nota ' + meta + '+ e conversão por origem. Plataforma com nota baixa pede ajuste de público ou de posicionamento; campanha com nota baixa pede revisão de criativo e segmentação. Origens com menos de 3 leads com nota ainda não dizem muito.';
+  // canal (Instagram × Facebook × ...)
   const pctN = (a, b) => b ? pct(a, b) : '—';
   const corN = (n) => n == null ? '' : n >= meta ? 'meta-ok' : 'meta-ruim';
-  $('#plataformas').innerHTML = pl.length ? `<table class="tabela"><thead><tr><th>Origem</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota ${meta}+</th><th class="d">Quentes</th><th class="d">Desqualif.</th><th class="d">Vendas</th><th class="d">Conversão</th><th class="d">Receita</th></tr></thead><tbody>` +
-    pl.map(p => `<tr><td>${esc(p.plataforma)}</td><td class="d num">${int(p.leads)}</td><td class="d num ${corN(p.nota_media)}">${p.nota_media ?? '—'}</td><td class="d num">${pctN(p.acima, p.com_nota)}</td><td class="d num">${int(p.quentes)}</td><td class="d num">${int(p.desqualificados)}</td><td class="d num">${int(p.vendas)}</td><td class="d num">${pctN(p.vendas, p.leads)}</td><td class="d num">${brl(p.receita)}</td></tr>`).join('') + '</tbody></table>'
-    : '<div class="vazio">Nenhum lead no período.</div>';
-  const temNomes = cp.some(c => c.campanha !== 'Campanha não identificada');
+  const plTodos = (r.plataformas || []).filter(p => p.leads && p.plataforma !== 'Orgânico');
+  // card só pra Instagram, Facebook e quem tiver volume; o resto vira uma linha no texto
+  const pl = plTodos.filter(p => ['Instagram', 'Facebook'].includes(p.plataforma) || p.leads >= 5);
+  const resto = plTodos.filter(p => !pl.includes(p)).reduce((s, p) => s + p.leads, 0);
+  const org = (r.plataformas || []).find(p => p.plataforma === 'Orgânico');
+  const validos = pl.filter(p => p.com_nota >= 5);
+  const vence = validos.slice().sort((a, b) => (b.acima / b.com_nota) - (a.acima / a.com_nota) || b.nota_media - a.nota_media)[0];
+  $('#h-canal').innerHTML = vence && validos.length >= 2 ? `${esc(vence.plataforma)} traz o lead mais qualificado.` : pl.length ? 'Qualidade por canal.' : 'Sem leads de anúncio no período.';
+  $('#l-canal').textContent = 'Comparação só entre leads de anúncio. O vencedor é o canal com a maior parte dos leads com nota ' + meta + '+ (mínimo de 5 leads com nota pra contar).' + (resto ? ` ${int(resto)} ${resto == 1 ? 'lead de anúncio veio' : 'leads de anúncio vieram'} sem a plataforma informada.` : '') + (org && org.leads ? ` Fora dos anúncios, ${int(org.leads)} ${org.leads == 1 ? 'lead orgânico' : 'leads orgânicos'}${org.nota_media != null ? ' com nota média ' + org.nota_media : ''}.` : '');
+  $('#duelo').innerHTML = pl.length ? pl.sort((a, b) => b.leads - a.leads).map(p => `<div class="card canal ${vence && p === vence && validos.length >= 2 ? 'vence' : ''}">
+      ${vence && p === vence && validos.length >= 2 ? '<span class="selo">Melhor canal</span>' : ''}
+      <div class="nome">${esc(p.plataforma)}</div>
+      <div class="grande num ${p.com_nota ? (p.acima / p.com_nota * 100 >= 30 ? 'meta-ok' : '') : ''}">${pctN(p.acima, p.com_nota)}</div><div class="rot">dos leads com nota ${meta}+</div>
+      <div class="linhas">
+        <div><span>Nota média</span><b class="${corN(p.nota_media)}">${p.nota_media ?? '—'}</b></div>
+        <div><span>Carro zero ou chegando</span><b>${pctN(p.zero_km, p.com_nota)}</b></div>
+        <div><span>Desqualificados (abaixo de 40)</span><b>${pctN(p.desqualificados, p.com_nota)}</b></div>
+        <div><span>Leads</span><b>${int(p.leads)}</b></div>
+        <div><span>Vendas</span><b>${int(p.vendas)}${p.vendas ? ' · ' + brlCurto(p.receita) : ''}</b></div>
+      </div></div>`).join('') : '<div class="card vazio">Nenhum lead de anúncio no período.</div>';
+
+  // ranking de criativos (por % de leads com nota 70+)
+  const an2 = (r.anuncios || []).filter(a => a.anuncio_id !== 'sem id');
+  const ok3 = an2.filter(a => a.com_nota >= 5).sort((a, b) => (b.acima / b.com_nota) - (a.acima / a.com_nota) || (b.nota_media || 0) - (a.nota_media || 0));
+  const poucos = an2.filter(a => a.com_nota < 5).sort((a, b) => b.leads - a.leads);
+  const topC = ok3[0];
+  $('#h-cri').textContent = topC ? `${topC.nome}: ${pct(topC.acima, topC.com_nota)} dos leads com nota ${meta}+.` : an2.length ? 'Ainda poucos leads por criativo.' : 'Sem criativos no período.';
+  $('#l-cri').textContent = 'Ordenados pela parte dos leads com nota ' + meta + '+. A etiqueta compara com a média do período (' + pctN(no.acima, no.com_nota) + '): Escalar fica bem acima, Pausar fica bem abaixo e sem venda. Com menos de 5 leads com nota, o criativo fica apagado no fim: ainda é cedo.';
+  const barra = (a) => { const t = a.leads || 1, sem = a.leads - a.com_nota, mid = a.com_nota - a.acima - a.desq;
+    return `<div class="comp" data-tip="${int(a.acima)} com ${meta}+ · ${int(mid)} entre 40 e 69 · ${int(a.desq)} abaixo de 40 · ${int(sem)} sem nota"><i style="width:${a.acima / t * 100}%;background:var(--ok)"></i><i style="width:${mid / t * 100}%;background:var(--warn)"></i><i style="width:${a.desq / t * 100}%;background:var(--bad)"></i></div>`; };
+  // mesma regra que a IA recebe (BRAVO 9): % 70+ do criativo contra a média do período
+  const basePct = no.com_nota ? no.acima / no.com_nota : 0;
+  const veredito = (a) => a.com_nota < 5 ? 'Testar mais' : (a.acima / a.com_nota >= basePct * 1.2 ? 'Escalar' : (a.acima / a.com_nota < basePct * 0.8 && !a.vendas ? 'Pausar' : 'Manter'));
+  const tagV = (v) => `<span class="ia-tag ${classeV(v)}">${v}</span>`;
+  const statusTx = (st) => !st ? '' : /ACTIVE/.test(st) && !/PAUSED/.test(st) ? ' · ativo' : ' · pausado';
+  $('#ranking').innerHTML = an2.length ? [...ok3, ...poucos].map((a, i) => `<div class="rk ${a.com_nota < 5 ? 'pequena' : ''}">
+      <div class="pos">${a.com_nota < 5 ? '·' : i + 1}</div>
+      <div><div class="n">${esc(a.nome)} ${tagV(veredito(a))}</div><div class="s">${a.campanha ? esc(a.campanha) + (a.conjunto ? ' · ' + esc(a.conjunto) : '') : 'id ' + esc(a.anuncio_id)}${statusTx(a.status)}</div>
+        <div class="s">${int(a.leads)} leads · nota média ${a.nota_media ?? '—'} · ${pctN(a.zero_km, a.com_nota)} carro zero · Instagram ${int(a.instagram)} / Facebook ${int(a.facebook)}${a.vendas ? ' · ' + int(a.vendas) + (a.vendas == 1 ? ' venda, ' : ' vendas, ') + brlCurto(a.receita) : ''}</div></div>
+      <div class="big num ${a.com_nota ? (a.acima / a.com_nota * 100 >= 30 ? 'meta-ok' : a.acima / a.com_nota * 100 < 10 ? 'meta-ruim' : '') : ''}">${pctN(a.acima, a.com_nota)}<small>nota ${meta}+</small></div>
+      ${barra(a)}</div>`).join('') : '<div class="vazio">Os criativos aparecem quando chegarem leads pelos anúncios.</div>';
+  const mot = (r.abaixo_motivos || []).map(m => ({ nome: m.motivo, n: m.n }));
+  $('#abaixo-motivos').innerHTML = barras(mot, mot.reduce((s, x) => s + x.n, 0));
+  const cp = r.campanhas || [], temNomes = cp.some(c => c.campanha !== 'Campanha não identificada');
   $('#campanhas').innerHTML = !cp.length ? '<div class="vazio">Nenhum lead de anúncio no período.</div>'
-    : (temNomes ? '' : '<div class="vazio">Os nomes das campanhas aparecem quando a leitura diária da Meta (BRAVO 8) estiver ligada. Por enquanto, veja por anúncio mais abaixo.</div>') +
-      (temNomes ? `<table class="tabela"><thead><tr><th>Campanha</th><th class="d">Anúncios</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota ${meta}+</th><th class="d">Vendas</th><th class="d">Receita</th></tr></thead><tbody>` +
-      cp.map(c => `<tr><td>${esc(c.campanha)}</td><td class="d num">${int(c.anuncios)}</td><td class="d num">${int(c.leads)}</td><td class="d num ${corN(c.nota_media)}">${c.nota_media ?? '—'}</td><td class="d num">${pctN(c.acima, c.com_nota)}</td><td class="d num">${int(c.vendas)}</td><td class="d num">${brl(c.receita)}</td></tr>`).join('') + '</tbody></table>' : '');
+    : `<table class="tabela"><thead><tr><th>Campanha</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota ${meta}+</th><th class="d">Vendas</th></tr></thead><tbody>` +
+      cp.map(c => `<tr><td>${esc(c.campanha)}</td><td class="d num">${int(c.leads)}</td><td class="d num ${corN(c.nota_media)}">${c.nota_media ?? '—'}</td><td class="d num">${pctN(c.acima, c.com_nota)}</td><td class="d num">${int(c.vendas)}</td></tr>`).join('') + '</tbody></table>' +
+      (temNomes ? '' : '<div class="vazio">Os nomes chegam com a leitura da Meta (BRAVO 8), a cada 3 horas.</div>');
 
   // funil
   $('#h-funil').textContent = t.leads ? `${pct(t.repassados, t.leads)} chegam ao consultor.` : 'O funil aparece com os primeiros leads.';
@@ -275,13 +399,6 @@ function desenhar(r, f, nomePer) {
       ${x.vendas ? `<i class="venda" style="bottom:calc(${h}% + 6px)"></i>` : ''}<div class="b" style="height:${h}%"></div></div>`;
   }).join('');
   $('#eixo').innerHTML = dias.length ? `<span>${data(dias[0] + 'T12:00:00')}</span><span>pico: ${int(max)} leads/dia</span><span>${data(dias[dias.length - 1] + 'T12:00:00')}</span>` : '';
-
-  // anúncios
-  const an = r.anuncios || [];
-  $('#h-anun').textContent = an.length ? `${int(t.de_anuncio)} leads de ${an.length} ${an.length == 1 ? 'anúncio' : 'anúncios'}.` : 'Nenhum lead de anúncio no período.';
-  $('#anuncios').innerHTML = an.length ? `<table class="tabela"><thead><tr><th>Anúncio</th><th>Plataforma</th><th class="d">Leads</th><th class="d">Nota média</th><th class="d">Nota 70+</th><th class="d">Repassados</th><th class="d">Vendas</th><th class="d">Receita</th></tr></thead><tbody>` +
-    an.map(a => `<tr><td>${esc(a.nome)}<div class="caption">${a.campanha ? esc(a.campanha) + (a.conjunto ? ' · ' + esc(a.conjunto) : '') + ' · ' : ''}id ${esc(a.anuncio_id)}</div></td><td>${esc(a.app || '—')}</td><td class="d num">${int(a.leads)}</td><td class="d num ${a.nota_media == null ? '' : a.nota_media >= META_NOTA ? 'meta-ok' : 'meta-ruim'}">${a.nota_media ?? '—'}</td><td class="d num">${a.com_nota ? pct(a.acima, a.com_nota) : '—'}</td><td class="d num">${int(a.repassados)}</td><td class="d num">${int(a.vendas)}</td><td class="d num">${brl(a.receita)}</td></tr>`).join('') + '</tbody></table>'
-    : '<div class="vazio">Os anúncios aparecem aqui assim que o primeiro lead clicar no botão de WhatsApp.</div>';
 
   // pipeline e ganhos
   const pi = r.pipeline || [], ga = r.vendas || [];
@@ -328,6 +445,7 @@ Bravo.iniciar('relatorio', (cliente) => {
   sb = cliente; dicas();
   $('#periodos').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPeriodo(b.dataset.p); });
   $('#d-ok').onclick = carregar; $('#m-ok').onclick = carregar;
+  $('#b-ia').onclick = pedirIA;
   setPeriodo(chave);
 });
 </script>
