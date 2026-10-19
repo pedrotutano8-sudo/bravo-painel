@@ -22,7 +22,7 @@
   };
 
   const STATUS = { triagem: 'Com o bot', esperando: 'Cliente esperando', atendimento: 'Em atendimento', proposta: 'Proposta enviada',
-    negociando: 'Negociando', agendado: 'Agendado', vendido: 'Ganho', perdido: 'Perdido' };
+    negociando: 'Negociando', carro: 'Aguardando o carro', agendado: 'Agendado', vendido: 'Ganho', perdido: 'Perdido' };
   const ha = (s) => { if (!s) return ''; const m = Math.max(0, Math.round((Date.now() - new Date(s).getTime()) / 60000));
     return m < 60 ? 'há ' + m + ' min' : m < 2880 ? 'há ' + Math.floor(m / 60) + 'h' : 'há ' + Math.floor(m / 1440) + ' dias'; };
   const SERVICO = { ppf: 'PPF', vitrificacao: 'Vitrificação', antivandalismo: 'Antivandalismo', insulfilm: 'Insulfilm', outro: 'Outro', indefinido: 'Não informado' };
