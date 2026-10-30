@@ -149,6 +149,11 @@ section.bloco{padding:72px 0;border-top:1px solid var(--border)}
       <div class="dupla" style="margin-top:14px"><div><div class="subt">Por que ficaram abaixo de 70</div><div class="card barras" id="abaixo-motivos"></div></div>
         <div><div class="subt">Por campanha</div><div class="card rolagem" id="campanhas"></div></div></div></section>
 
+    <section class="bloco" id="sec-pub"><div class="eyebrow">Criativo × público</div><h2 class="headline" id="h-pub"></h2>
+      <p class="lede">Cada criativo tem uma intenção: o serviço que vende e o carro que quer atrair. O sistema compara com quem chegou: <b>dentro do público</b> (serviço e carro no perfil), <b>parcial</b> (perto, ou falta um dado) e <b>fora</b>. Dá pra ver se o criativo atrai a pessoa certa antes das vendas aparecerem.</p>
+      <div class="legenda-c" style="padding:0 0 14px"><span><i class="ponto" style="background:var(--ok)"></i>Dentro</span><span><i class="ponto" style="background:var(--warn)"></i>Parcial</span><span><i class="ponto" style="background:var(--bad)"></i>Fora</span><span><i class="ponto" style="background:var(--neutral-soft)"></i>Aguardando triagem</span></div>
+      <div class="card itens" id="publico"></div></section>
+
     <section class="bloco"><div class="eyebrow">Funil</div><h2 class="headline" id="h-funil"></h2><p class="lede">Do primeiro "oi" até a venda registrada. Cada barra mostra quantos leads chegaram àquela etapa.</p><div class="card barras" id="funil"></div></section>
 
     <section class="bloco"><div class="eyebrow">Velocidade</div><h2 class="headline" id="h-vel"></h2><p class="lede" id="l-vel"></p><div class="stats" id="vel"></div></section>
@@ -364,6 +369,20 @@ function desenhar(r, f, nomePer) {
         <div class="s">${int(a.leads)} leads · nota média ${a.nota_media ?? '—'} · ${pctN(a.zero_km, a.com_nota)} carro zero · Instagram ${int(a.instagram)} / Facebook ${int(a.facebook)}${a.vendas ? ' · ' + int(a.vendas) + (a.vendas == 1 ? ' venda, ' : ' vendas, ') + brlCurto(a.receita) : ''}</div></div>
       <div class="big num ${a.com_nota ? (a.acima / a.com_nota * 100 >= 30 ? 'meta-ok' : a.acima / a.com_nota * 100 < 10 ? 'meta-ruim' : '') : ''}">${pctN(a.acima, a.com_nota)}<small>nota ${meta}+</small></div>
       ${barra(a)}</div>`).join('') : '<div class="vazio">Os criativos aparecem quando chegarem leads pelos anúncios.</div>';
+  // criativo × público (ficha de intenção de cada criativo)
+  const ci = r.criativos_intencao || [];
+  const ciCom = ci.filter(x => x.leads > 0);
+  const pctD = (x) => { const base = x.leads - x.sem_dados; return base ? x.dentro / base : null; };
+  const melhor = ciCom.filter(x => x.leads - x.sem_dados >= 5).sort((a, b) => pctD(b) - pctD(a))[0];
+  $('#h-pub').textContent = melhor ? `${melhor.nome.split(' · ')[0]}: ${pct(melhor.dentro, melhor.leads - melhor.sem_dados)} dos leads dentro do público.` : ciCom.length ? 'Ainda poucos leads triados por criativo.' : 'Os criativos com ficha aparecem quando chegarem leads.';
+  const barraP = (x) => { const t = x.leads || 1; return `<div class="comp" data-tip="${int(x.dentro)} dentro · ${int(x.parcial)} parcial · ${int(x.fora)} fora · ${int(x.sem_dados)} aguardando triagem"><i style="width:${x.dentro / t * 100}%;background:var(--ok)"></i><i style="width:${x.parcial / t * 100}%;background:var(--warn)"></i><i style="width:${x.fora / t * 100}%;background:var(--bad)"></i></div>`; };
+  $('#publico').innerHTML = ci.length ? ci.map(x => { const p = pctD(x); return `<div class="rk ${x.leads - x.sem_dados < 5 ? 'pequena' : ''}">
+      <div class="pos">${x.leads ? '·' : ''}</div>
+      <div><div class="n">${esc(x.nome)}</div><div class="s">${esc(x.intencao || '')}</div>
+        <div class="s">${int(x.leads)} ${x.leads == 1 ? 'lead' : 'leads'} · ${int(x.nota70)} com nota ${meta}+ · ${int(x.orcados)} com orçamento · ${int(x.vendas)} ${x.vendas == 1 ? 'venda' : 'vendas'}${x.vendas ? ', ' + brlCurto(x.receita) : ''}</div>
+        ${(x.fora_motivos || []).length ? `<div class="s">Fora do público: ${x.fora_motivos.slice(0, 3).map(m => esc(m.motivo) + (m.n > 1 ? ' (' + int(m.n) + ')' : '')).join(' · ')}</div>` : ''}</div>
+      <div class="big num ${p == null ? '' : p >= 0.6 ? 'meta-ok' : p < 0.3 ? 'meta-ruim' : ''}">${p == null ? '—' : Math.round(p * 100) + '%'}<small>dentro do público</small></div>
+      ${barraP(x)}</div>`; }).join('') : '<div class="vazio">Nenhum criativo com ficha de intenção.</div>';
   const mot = (r.abaixo_motivos || []).map(m => ({ nome: m.motivo, n: m.n }));
   $('#abaixo-motivos').innerHTML = barras(mot, mot.reduce((s, x) => s + x.n, 0));
   const cp = r.campanhas || [], temNomes = cp.some(c => c.campanha !== 'Campanha não identificada');
