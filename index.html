@@ -48,6 +48,7 @@
 .quem .t,.oque .t{font-size:13px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
 .quem .o{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
 .fit{display:inline-block;margin-top:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:980px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+.fit-antes{background:var(--info-soft);color:var(--info);margin-right:4px}
 .fit-dentro{background:var(--ok-soft);color:var(--ok)}.fit-parcial{background:var(--warn-soft);color:var(--warn)}.fit-fora{background:var(--bad-soft);color:var(--bad)}.fit-sem_dados{background:var(--neutral-soft);color:var(--text-2)}
 .oque .c{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nota b{font-size:17px;font-weight:600}.nota span{font-size:12px;color:var(--text-3)}
@@ -201,7 +202,8 @@ function render() {
       : l.orcamento_valor ? `<div class="s">Orçado</div><div class="num">${brl(l.orcamento_valor)}</div>` : '<span class="s">—</span>';
     const fechado = l.status === 'vendido' || l.status === 'perdido';
     const quando = l.status === 'esperando' ? ha(l.ultima_msg_lead_at)
-      : l.status === 'agendado' && l.agendado_para ? 'dia ' + data(l.agendado_para + 'T12:00:00') : '';
+      : l.status === 'agendado' && l.agendado_para ? 'dia ' + data(l.agendado_para + 'T12:00:00')
+      : l.status === 'carro' && l.volta_em ? 'chama dia ' + data(l.volta_em + 'T12:00:00') : '';
     const sg = l.sugestao;
     const sug = !sg ? '' : `<div class="sug ${sg.tipo === 'perdido' ? 'perda' : ''}"><div class="tx">🤖 <b>A IA leu ${sg.tipo === 'venda'
         ? 'uma venda' + (Number(sg.valor) > 0 ? ' de ' + brl(sg.valor) : '') : 'que o lead foi perdido' + (sg.motivo ? ' · ' + esc(sg.motivo) : '')}</b>${sg.evidencia ? ` <span>· ${esc(sg.evidencia)}</span>` : ''}</div>
@@ -212,7 +214,7 @@ function render() {
       ? `<button class="btn sm" data-a="reabrir" data-t="${esc(l.telefone)}">Reabrir</button>`
       : `<button class="btn sm ganho" data-a="ganho" data-t="${esc(l.telefone)}">Ganho</button><button class="btn sm perdido" data-a="perdido" data-t="${esc(l.telefone)}">Perdido</button>`;
     return `<div class="linha-l ${l.telefone === alvoInicial ? 'realce' : ''}">
-      <div class="quem"><div class="n">${esc(l.nome || 'Sem nome')}</div><div class="t num">${manual ? 'Venda em ' + data(l.venda_at) : esc(fone(l.telefone)) + ' · ' + dataHora(l.chegou_em)}</div><div class="o">${esc(origem)}</div>${l.criativo ? `<div class="fit fit-${esc(l.publico || 'sem_dados')}" title="${esc(l.publico_motivo || '')}">${esc(String(l.criativo).split(' · ')[0])} · ${({ dentro: 'dentro do público', parcial: 'parcial', fora: 'fora do público', sem_dados: 'aguardando triagem' })[l.publico] || 'aguardando triagem'}</div>` : ''}</div>
+      <div class="quem"><div class="n">${esc(l.nome || 'Sem nome')}</div><div class="t num">${manual ? 'Venda em ' + data(l.venda_at) : esc(fone(l.telefone)) + ' · ' + dataHora(l.chegou_em)}</div><div class="o">${esc(origem)}</div>${l.chegou_antes && !manual ? `<div class="fit fit-antes" title="Chegou antes do período e ainda pede ação">de ${esc(MESES[new Date(l.chegou_em).getMonth()].toLowerCase())}</div> ` : ''}${l.criativo ? `<div class="fit fit-${esc(l.publico || 'sem_dados')}" title="${esc(l.publico_motivo || '')}">${esc(String(l.criativo).split(' · ')[0])} · ${({ dentro: 'dentro do público', parcial: 'parcial', fora: 'fora do público', sem_dados: 'aguardando triagem' })[l.publico] || 'aguardando triagem'}</div>` : ''}</div>
       <div class="oque"><div class="c">${esc(l.veiculo || 'Carro não informado')}</div><div class="t">${esc(serv || 'Serviço não informado')}</div>${l.situacao_resumo && !fechado ? `<div class="ia" title="${esc(l.situacao_resumo)}">${esc(l.situacao_resumo)}</div>` : ''}</div>
       <div class="nota"><b class="num">${l.score ?? '—'}</b><span>/100</span>${l.score_classe ? `<em class="cl cl-${esc(String(l.score_classe).toLowerCase())}">${esc(l.score_classe)}</em>` : ''}</div>
       <div class="st"><span class="pill p-${l.status}">${STATUS[l.status] || l.status}</span>${quando ? `<span class="q">${esc(quando)}</span>` : ''}</div>
