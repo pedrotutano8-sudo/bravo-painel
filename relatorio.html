@@ -334,11 +334,16 @@ function desenhar(r, f, nomePer) {
   const resto = plTodos.filter(p => !pl.includes(p)).reduce((s, p) => s + p.leads, 0);
   const org = (r.plataformas || []).find(p => p.plataforma === 'Orgânico');
   const validos = pl.filter(p => p.com_nota >= 5);
-  const vence = validos.slice().sort((a, b) => (b.acima / b.com_nota) - (a.acima / a.com_nota) || b.nota_media - a.nota_media)[0];
-  $('#h-canal').innerHTML = vence && validos.length >= 2 ? `${esc(vence.plataforma)} traz o lead mais qualificado.` : pl.length ? 'Qualidade por canal.' : 'Sem leads de anúncio no período.';
-  $('#l-canal').textContent = 'Comparação só entre leads de anúncio. O vencedor é o canal com a maior parte dos leads com nota ' + meta + '+ (mínimo de 5 leads com nota pra contar).' + (resto ? ` ${int(resto)} ${resto == 1 ? 'lead de anúncio veio' : 'leads de anúncio vieram'} sem a plataforma informada.` : '') + (org && org.leads ? ` Fora dos anúncios, ${int(org.leads)} ${org.leads == 1 ? 'lead orgânico' : 'leads orgânicos'}${org.nota_media != null ? ' com nota média ' + org.nota_media : ''}.` : '');
-  $('#duelo').innerHTML = pl.length ? pl.sort((a, b) => b.leads - a.leads).map(p => `<div class="card canal ${vence && p === vence && validos.length >= 2 ? 'vence' : ''}">
-      ${vence && p === vence && validos.length >= 2 ? '<span class="selo">Melhor canal</span>' : ''}
+  // saldo de qualidade = % de leads bons (nota meta+) menos % de desqualificados. Olhar só os bons
+  // dava vitória a um canal com metade dos leads desqualificados por 1 ponto de diferença (09/11).
+  const saldo = (p) => (p.acima - p.desqualificados) / p.com_nota * 100;
+  const ord = validos.slice().sort((a, b) => saldo(b) - saldo(a) || b.nota_media - a.nota_media);
+  const folga = ord.length >= 2 ? saldo(ord[0]) - saldo(ord[1]) : 0;
+  const vence = ord.length >= 2 && folga >= 5 ? ord[0] : null;
+  $('#h-canal').innerHTML = vence ? `${esc(vence.plataforma)} traz o lead mais qualificado.` : ord.length >= 2 ? `${esc(ord[0].plataforma)} e ${esc(ord[1].plataforma)} empatam na qualidade.` : pl.length ? 'Qualidade por canal.' : 'Sem leads de anúncio no período.';
+  $('#l-canal').textContent = 'Comparação só entre leads de anúncio. Ganha o canal com mais leads de nota ' + meta + '+ e menos desqualificados (abaixo de 40), com pelo menos 5 pontos de vantagem e mínimo de 5 leads com nota.' + (resto ? ` ${int(resto)} ${resto == 1 ? 'lead de anúncio veio' : 'leads de anúncio vieram'} sem a plataforma informada.` : '') + (org && org.leads ? ` Fora dos anúncios, ${int(org.leads)} ${org.leads == 1 ? 'lead orgânico' : 'leads orgânicos'}${org.nota_media != null ? ' com nota média ' + org.nota_media : ''}.` : '');
+  $('#duelo').innerHTML = pl.length ? pl.sort((a, b) => b.leads - a.leads).map(p => `<div class="card canal ${vence && p === vence ? 'vence' : ''}">
+      ${vence && p === vence ? '<span class="selo">Melhor canal</span>' : ''}
       <div class="nome">${esc(p.plataforma)}</div>
       <div class="grande num ${p.com_nota ? (p.acima / p.com_nota * 100 >= 30 ? 'meta-ok' : '') : ''}">${pctN(p.acima, p.com_nota)}</div><div class="rot">dos leads com nota ${meta}+</div>
       <div class="linhas">
