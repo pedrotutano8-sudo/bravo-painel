@@ -287,7 +287,7 @@ function desenhar(r, f, nomePer) {
   $('#stats').innerHTML =
     stat(int(t.leads), 'leads', `${int(t.de_anuncio)} vieram de anúncio`) +
     stat(int(t.vendas), t.vendas == 1 ? 'venda' : 'vendas', conv != null ? compara(+conv.toFixed(1), ANTES.conv_ago, false, '% em agosto') : '') +
-    stat(brlCurto(t.receita), 'em vendas', t.vendas ? 'ticket médio ' + brl(t.receita / t.vendas) : 'nenhuma venda marcada ainda') +
+    stat(brlCurto(t.receita), 'em vendas fechadas no período', t.vendas ? 'ticket médio ' + brl(t.receita / t.vendas) + (t.vendas_leads_anteriores ? ` · ${int(t.vendas_leads_anteriores)} de lead de mês anterior (${brlCurto(t.receita_leads_anteriores)})` : '') : 'nenhuma venda marcada ainda') +
     stat(brlCurto(t.pipeline_valor), 'em orçamentos abertos', `${int(t.em_aberto)} em negociação`);
 
   // qualidade dos leads (nota)
@@ -433,7 +433,7 @@ function desenhar(r, f, nomePer) {
     : '<div class="vazio">Tudo resolvido no período.</div>';
   $('#ganhos').innerHTML = ga.length ? ga.map(v => `<a class="item" href="index.html?lead=${encodeURIComponent(v.telefone)}">
       <span class="n">${esc(v.nome || fone(v.telefone))}${v.veiculo ? ' · ' + esc(v.veiculo) : ''}</span><span class="v num">${brl(v.valor)}</span>
-      <span class="s">${data(v.venda_at)}${v.score != null ? ' · nota ' + v.score : ''} · ${String(v.telefone).startsWith('manual-') ? 'venda manual' : v.meta_enviado_at ? '✓ enviado à Meta' : 'aguardando envio à Meta'}</span></a>`).join('')
+      <span class="s">${data(v.venda_at)}${v.lead_anterior ? ' · lead de ' + data(v.lead_chegou) : ''}${v.score != null ? ' · nota ' + v.score : ''} · ${String(v.telefone).startsWith('manual-') ? 'venda manual' : v.meta_enviado_at ? '✓ enviado à Meta' : 'aguardando envio à Meta'}</span></a>`).join('')
     : '<div class="vazio">Nenhuma venda marcada no período.</div>';
 
   // onde pararam
